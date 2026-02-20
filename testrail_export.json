@@ -1,0 +1,135 @@
+{
+  "format": "testrail",
+  "version": "1.0",
+  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855",
+  "test_cases": [
+    {
+      "title": "Browse Homepage and Navigate Categories",
+      "custom_id": "TC-001",
+      "priority_id": 2,
+      "type_id": 1,
+      "custom_preconds": "None",
+      "custom_steps_separated": [
+        {
+          "content": "Navigate to https://books.toscrape.com",
+          "expected": "Homepage loads showing grid of books with categories in left sidebar",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_001_homepage.png"
+        },
+        {
+          "content": "Click \"Mystery\" category in sidebar",
+          "expected": "Should navigate to Mystery category showing filtered list of mystery books",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_002_before_click_Mystery.png"
+        },
+        {
+          "content": "Verify category page elements",
+          "expected": "Page should show:\n- \"Mystery\" category title\n- Filtered book grid\n- Breadcrumb navigation\n- Category sidebar still visible",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_004_category_listing.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "View Product Details",
+      "custom_id": "TC-002",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "None",
+      "custom_steps_separated": [
+        {
+          "content": "Navigate to book detail page",
+          "expected": "Product detail page loads showing:\n- Product title and image\n- Price and availability\n- Product information table\n- Add to basket button",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_010_product_detail.png"
+        },
+        {
+          "content": "Verify product information",
+          "expected": "Product information table should show:\n- UPC\n- Product Type\n- Price (excl. tax)\n- Price (incl. tax)\n- Tax\n- Availability\n- Number of reviews",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_010_product_detail.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Category Navigation",
+      "custom_id": "TC-003",
+      "priority_id": 3,
+      "type_id": 4,
+      "custom_preconds": "None",
+      "custom_steps_separated": [
+        {
+          "content": "Load homepage",
+          "expected": "Homepage loads with category sidebar",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_001_homepage.png"
+        },
+        {
+          "content": "Verify all category links",
+          "expected": "Sidebar should show all book categories as clickable links",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_001_homepage.png"
+        },
+        {
+          "content": "Click each category",
+          "expected": "Each category should:\n- Update URL with category name\n- Filter book grid to category\n- Show category name in breadcrumbs",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_007_product_listing.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Empty Category Handling",
+      "custom_id": "TC-004",
+      "priority_id": 3,
+      "type_id": 6,
+      "custom_preconds": "None",
+      "custom_steps_separated": [
+        {
+          "content": "Navigate to a category with no books",
+          "expected": "Should show \"No books found\" message"
+        },
+        {
+          "content": "Verify UI elements",
+          "expected": "Category sidebar and navigation should still be present"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Invalid Product URLs",
+      "custom_id": "TC-005",
+      "priority_id": 3,
+      "type_id": 7,
+      "custom_preconds": "None",
+      "custom_steps_separated": [
+        {
+          "content": "Navigate to non-existent product URL",
+          "expected": "Should show 404 page"
+        },
+        {
+          "content": "Verify 404 page",
+          "expected": "Should have:\n- Clear error message\n- Navigation options to return home"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Product Grid Pagination",
+      "custom_id": "TC-006",
+      "priority_id": 3,
+      "type_id": 2,
+      "custom_preconds": "None",
+      "custom_steps_separated": [
+        {
+          "content": "Navigate to category with >20 books",
+          "expected": "Pagination controls should appear"
+        },
+        {
+          "content": "Click next page",
+          "expected": "Should load next set of books"
+        },
+        {
+          "content": "Verify product count",
+          "expected": "Should maintain accurate count across pages"
+        }
+      ],
+      "custom_automation_type": 0
+    }
+  ]
+}

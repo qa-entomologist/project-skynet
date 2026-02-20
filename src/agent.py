@@ -86,7 +86,8 @@ def scan_page(page_type: str, observations: str) -> str:
         page_type: What type of page this is (e.g. "homepage", "product_listing", "product_detail", "cart", "checkout", "login", "search_results", "category", "settings", "error_page", "form")
         observations: Your detailed QA observations about this page. Include: what content is displayed, what state the page is in, any notable UI elements, forms, error messages, loading states, accessibility concerns, or anything a QA tester should verify.
     """
-    screenshot_path = browser.take_screenshot()
+    safe_type = page_type.replace(" ", "_")
+    screenshot_path = browser.take_screenshot(label=safe_type)
     elements = browser.get_interactive_elements()
     back_nav = browser.detect_back_button()
 
@@ -153,10 +154,15 @@ def click_element(element_index: int, reason: str, expected_result: str) -> str:
     if graph_store.page_count() >= MAX_PAGES:
         return json.dumps({"error": "MAX_PAGES limit reached. Stop exploring and generate test cases."})
 
+    safe_text = (target["text"] or "element").replace(" ", "_")[:40]
+    before_screenshot = browser.take_screenshot(label=f"before_click_{safe_text}")
+
     try:
         meta = browser.click_element(target["selector"])
     except Exception as e:
         return json.dumps({"error": f"Click failed: {e}"})
+
+    after_screenshot = browser.take_screenshot(label=f"after_click_{safe_text}")
 
     new_url = meta["url"]
     new_page_id = _page_id(new_url)
@@ -173,6 +179,7 @@ def click_element(element_index: int, reason: str, expected_result: str) -> str:
             domain=meta["domain"],
             path=meta["path"],
             depth=_current_depth,
+            screenshot_path=after_screenshot,
         )
         is_new = graph_store.add_page(page)
 
@@ -196,6 +203,8 @@ def click_element(element_index: int, reason: str, expected_result: str) -> str:
         "clicked": target["text"],
         "reason": reason,
         "expected_result": expected_result,
+        "screenshot_before": before_screenshot,
+        "screenshot_after": after_screenshot,
         "url_changed": url_changed,
         "is_spa_navigation": is_spa_nav and not url_changed,
         "is_new_page": is_new,
@@ -301,12 +310,14 @@ def generate_test_cases() -> str:
         for item in flow:
             if "url" in item:
                 page = pages.get(item["page_id"])
+                screenshot = page.screenshot_path if page else ""
                 steps.append({
                     "type": "page",
                     "url": item["url"],
                     "title": item["title"],
                     "page_type": item["page_type"],
                     "observations": item["observations"],
+                    "screenshot": screenshot,
                 })
             elif "action" in item:
                 steps.append({
@@ -326,6 +337,7 @@ def generate_test_cases() -> str:
                 "page_type": p.page_type,
                 "observations": p.observations,
                 "element_count": p.element_count,
+                "screenshot": p.screenshot_path,
             })
 
     # Also export the graph
@@ -340,11 +352,16 @@ def generate_test_cases() -> str:
         "flows": flow_descriptions,
         "page_inventory": page_inventory,
         "graph_exported": graph_path,
+        "screenshot_dir": browser.run_dir,
         "instruction": (
             "Now write comprehensive QA test cases using write_test_report. "
             "For EACH flow, create a test case with: ID, title, preconditions, "
             "numbered steps with specific actions, and expected results for each step. "
-            "Also add edge-case and negative test cases based on the pages you observed."
+            "IMPORTANT: For each step that has a screenshot, add a 'Screenshot' column "
+            "referencing the filename (e.g. `step_001_homepage.png`). These screenshots "
+            "serve as visual evidence of expected state and can be attached in TestRail. "
+            "Also add edge-case and negative test cases based on the pages you observed. "
+            "After write_test_report, call export_testrail_json to produce a TestRail-compatible export."
         ),
     }
     return json.dumps(result, indent=2)
@@ -369,14 +386,80 @@ def write_test_report(markdown_content: str) -> str:
     })
 
 
+@tool
+def export_testrail_json(test_cases_json: str) -> str:
+    """Export test cases in a TestRail-compatible JSON format with screenshot attachments.
+    This file can be imported into TestRail or other test management tools.
+
+    Args:
+        test_cases_json: A JSON string containing an array of test case objects. Each object must have: "id" (e.g. "TC-001"), "title", "priority" (1-4, where 1=P0/Critical), "type" (e.g. "Functional"), "preconditions", "steps" (array of {"action": str, "expected": str, "screenshot": str or null})
+    """
+    try:
+        test_cases = json.loads(test_cases_json)
+    except json.JSONDecodeError as e:
+        return json.dumps({"error": f"Invalid JSON: {e}"})
+
+    screenshot_dir = browser.run_dir
+
+    testrail_cases = []
+    for tc in test_cases:
+        steps_with_attachments = []
+        for step in tc.get("steps", []):
+            entry = {
+                "content": step.get("action", ""),
+                "expected": step.get("expected", ""),
+            }
+            ss = step.get("screenshot")
+            if ss:
+                entry["attachment"] = os.path.join(screenshot_dir, os.path.basename(ss)) if not os.path.isabs(ss) else ss
+            steps_with_attachments.append(entry)
+
+        testrail_cases.append({
+            "title": tc.get("title", tc.get("id", "")),
+            "custom_id": tc.get("id", ""),
+            "priority_id": tc.get("priority", 2),
+            "type_id": _testrail_type(tc.get("type", "Functional")),
+            "custom_preconds": tc.get("preconditions", ""),
+            "custom_steps_separated": steps_with_attachments,
+            "custom_automation_type": 0,
+        })
+
+    export = {
+        "format": "testrail",
+        "version": "1.0",
+        "screenshot_directory": screenshot_dir,
+        "test_cases": testrail_cases,
+    }
+
+    export_path = os.path.join(PROJECT_ROOT, "testrail_export.json")
+    with open(export_path, "w") as f:
+        json.dump(export, f, indent=2)
+
+    return json.dumps({
+        "status": "exported",
+        "file": export_path,
+        "test_case_count": len(testrail_cases),
+        "screenshot_dir": screenshot_dir,
+    })
+
+
+def _testrail_type(type_str: str) -> int:
+    """Map test type string to TestRail type_id."""
+    mapping = {
+        "smoke": 1, "functional": 2, "regression": 3,
+        "navigation": 4, "e2e": 5, "edge": 6, "negative": 7,
+    }
+    return mapping.get(type_str.lower(), 2)
+
+
 # ---------------------------------------------------------------------------
 # System prompt
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are the Web Cartographer QA Agent — an autonomous AI that explores websites and produces comprehensive QA test cases.
+SYSTEM_PROMPT = """You are the Web Cartographer QA Agent — an autonomous AI that explores websites, captures visual evidence, and produces comprehensive QA test cases ready for TestRail.
 
 ## Your Mission
-Given a starting URL, systematically explore the website to discover all user flows, then generate a complete QA test suite with detailed test cases, steps, and expected results.
+Given a starting URL, systematically explore the website to discover all user flows, capture screenshots at every step as visual evidence of expected behavior, then generate a complete QA test suite with detailed test cases, steps, expected results, and screenshot references.
 
 ## Phase 1: Exploration
 1. Navigate to the provided URL
@@ -386,8 +469,10 @@ Given a starting URL, systematically explore the website to discover all user fl
    - Error states, empty states, loading indicators
    - Navigation elements and their destinations
    - Accessibility concerns (missing labels, contrast, keyboard nav)
+   - A screenshot is automatically captured with each scan
 3. Click through different paths using depth-first exploration:
    - For each click, state what you EXPECT to happen (this becomes the test assertion)
+   - Before/after screenshots are captured automatically on every click
    - Scan the resulting page and note what ACTUALLY happened
    - Continue deeper until dead end or max depth, then go back
 4. Prioritize diverse flow coverage:
@@ -398,10 +483,10 @@ Given a starting URL, systematically explore the website to discover all user fl
    - Error/edge case triggers (404 pages, empty states)
 
 ## Phase 2: Test Case Generation
-After exploration, call generate_test_cases to extract all flows, then call write_test_report with a comprehensive markdown report containing:
+After exploration, call generate_test_cases to extract all flows, then call write_test_report with a comprehensive markdown report.
 
 ### Report Structure
-1. **Test Suite Summary** — site overview, pages discovered, flows mapped
+1. **Test Suite Summary** — site overview, pages discovered, flows mapped, screenshot directory
 2. **Test Cases** — one per discovered flow, formatted as:
 
 ```
@@ -410,20 +495,25 @@ After exploration, call generate_test_cases to extract all flows, then call writ
 **Type:** Smoke / Functional / Navigation / E2E
 **Preconditions:** [What must be true before starting]
 
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1    | Navigate to [URL] | Page loads, title is "[title]" |
-| 2    | Click "[element text]" | Navigates to [expected page] |
-| ...  | ... | ... |
+| Step | Action | Expected Result | Screenshot |
+|------|--------|-----------------|------------|
+| 1    | Navigate to [URL] | Page loads with [description] | `step_001_homepage.png` |
+| 2    | Click "[element text]" | Navigates to [expected page] | `step_002_before_click_X.png`, `step_003_after_click_X.png` |
+| ...  | ... | ... | ... |
 ```
 
-3. **Edge Case & Negative Test Cases** — based on your observations:
-   - What happens with invalid input?
-   - What if a page is accessed directly by URL?
-   - What about broken links or missing content?
-   - What about browser back/forward behavior?
-
+3. **Edge Case & Negative Test Cases** — based on your observations
 4. **Coverage Matrix** — table mapping pages to test cases that cover them
+5. **Screenshot Inventory** — list of all captured screenshots with descriptions
+
+## Phase 3: TestRail Export
+After writing the test report, call export_testrail_json with a JSON array of test cases. Each test case object must have:
+- "id": "TC-001"
+- "title": "Test case title"
+- "priority": 1-4 (1=Critical/P0, 2=High/P1, 3=Medium/P2, 4=Low/P3)
+- "type": "Functional" / "Smoke" / "Navigation" / "E2E" / "Edge" / "Negative"
+- "preconditions": "What must be true before starting"
+- "steps": [{{ "action": "...", "expected": "...", "screenshot": "filename.png" or null }}]
 
 ## Navigation Rules
 - Stay on the same domain — don't follow external links
@@ -436,7 +526,7 @@ After exploration, call generate_test_cases to extract all flows, then call writ
 1. navigate_to_url → scan_page (with observations) → click_element (with expected result) → repeat
 2. When at dead end: go_back → scan_page → try next path
 3. Periodically: get_exploration_status
-4. When done exploring: generate_test_cases → write_test_report
+4. When done exploring: generate_test_cases → write_test_report → export_testrail_json
 
 Start exploring now!
 """.format(max_depth=MAX_DEPTH, max_pages=MAX_PAGES)
@@ -460,6 +550,7 @@ def create_explorer_agent() -> Agent:
             get_exploration_status,
             generate_test_cases,
             write_test_report,
+            export_testrail_json,
         ],
     )
     return agent

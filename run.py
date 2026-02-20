@@ -124,6 +124,12 @@ def main():
         if os.path.exists(report_path):
             logger.info("QA Test Report: %s", report_path)
 
+        testrail_path = os.path.join(os.path.dirname(__file__), "testrail_export.json")
+        if os.path.exists(testrail_path):
+            logger.info("TestRail Export: %s", testrail_path)
+
+        logger.info("Screenshots: %s", browser.run_dir)
+
     except KeyboardInterrupt:
         logger.info("\nExploration interrupted. Saving current progress...")
         graph_json = graph_store.to_json()

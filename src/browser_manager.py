@@ -26,8 +26,15 @@ class BrowserManager:
         self._proc: subprocess.Popen | None = None
         self._current_url: str = ""
         self._current_title: str = ""
+        self._step_counter: int = 0
+        self._run_dir: str = ""
 
     def start(self):
+        run_id = time.strftime("%Y%m%d_%H%M%S")
+        self._run_dir = os.path.join(SCREENSHOT_DIR, f"run_{run_id}")
+        os.makedirs(self._run_dir, exist_ok=True)
+        self._step_counter = 0
+
         self._proc = subprocess.Popen(
             ["python3", _HELPER_SCRIPT, str(HEADLESS).lower()],
             stdin=subprocess.PIPE,
@@ -79,12 +86,20 @@ class BrowserManager:
         self._current_title = resp.get("title", "")
         return resp
 
-    def take_screenshot(self) -> str:
-        """Capture a screenshot and return the file path."""
-        url_hash = hashlib.md5(self._current_url.encode()).hexdigest()[:10]
-        ts = int(time.time())
-        filename = f"{url_hash}_{ts}.png"
-        filepath = os.path.join(SCREENSHOT_DIR, filename)
+    @property
+    def run_dir(self) -> str:
+        return self._run_dir
+
+    def take_screenshot(self, label: str = "page") -> str:
+        """Capture a screenshot with a meaningful name and return the file path.
+
+        Args:
+            label: Descriptive label (e.g. "homepage", "before_click_add_to_cart")
+        """
+        self._step_counter += 1
+        safe_label = label.replace(" ", "_").replace("/", "_")[:60]
+        filename = f"step_{self._step_counter:03d}_{safe_label}.png"
+        filepath = os.path.join(self._run_dir, filename)
         resp = self._send({"action": "screenshot", "path": filepath})
         return resp.get("path", filepath)
 
