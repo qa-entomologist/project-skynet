@@ -176,6 +176,10 @@ def main():
 
             elif action == "click":
                 selector = cmd["selector"]
+                # Capture DOM state before click for SPA detection
+                dom_before = page.evaluate("() => document.body.innerHTML.length")
+                title_before = page.title()
+                
                 try:
                     page.click(selector, timeout=5000)
                     page.wait_for_timeout(2000)
@@ -185,7 +189,18 @@ def main():
                         page.wait_for_timeout(2000)
                     except Exception:
                         pass
-                respond(get_page_meta(page))
+                
+                # Check for DOM changes (SPA navigation)
+                dom_after = page.evaluate("() => document.body.innerHTML.length")
+                title_after = page.title()
+                dom_changed = abs(dom_after - dom_before) > 100  # Significant DOM change
+                title_changed = title_before != title_after
+                
+                meta = get_page_meta(page)
+                meta["dom_changed"] = dom_changed
+                meta["title_changed"] = title_changed
+                meta["is_spa_navigation"] = not meta["url"].startswith(cmd.get("previous_url", "")) and (dom_changed or title_changed)
+                respond(meta)
 
             elif action == "go_back":
                 try:

@@ -161,8 +161,10 @@ def click_element(element_index: int, reason: str, expected_result: str) -> str:
     new_url = meta["url"]
     new_page_id = _page_id(new_url)
     url_changed = (new_page_id != old_page_id)
+    # Also check for SPA navigation (DOM/title changed without URL change)
+    is_spa_nav = meta.get("is_spa_navigation", False) or meta.get("dom_changed", False) or meta.get("title_changed", False)
 
-    if url_changed:
+    if url_changed or is_spa_nav:
         _current_depth += 1
         page = PageNode(
             id=new_page_id,
@@ -195,6 +197,7 @@ def click_element(element_index: int, reason: str, expected_result: str) -> str:
         "reason": reason,
         "expected_result": expected_result,
         "url_changed": url_changed,
+        "is_spa_navigation": is_spa_nav and not url_changed,
         "is_new_page": is_new,
         "new_url": new_url,
         "new_title": meta["title"],

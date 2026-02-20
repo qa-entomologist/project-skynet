@@ -95,7 +95,7 @@ class BrowserManager:
 
     def click_element(self, selector: str) -> dict:
         """Click an element by selector and return new page metadata."""
-        resp = self._send({"action": "click", "selector": selector})
+        resp = self._send({"action": "click", "selector": selector, "previous_url": self._current_url})
         self._current_url = resp.get("url", self._current_url)
         self._current_title = resp.get("title", self._current_title)
         return resp
