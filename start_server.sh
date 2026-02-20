@@ -18,3 +18,5 @@ fi
 # Start the server
 python3 run_risk_advisor.py --server --port 8000
 
+
+
