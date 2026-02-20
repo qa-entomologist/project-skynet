@@ -3,7 +3,7 @@ venv/
 __pycache__/
 *.pyc
 .env
-screenshots/*.png
+screenshots/
 web/graph_data.json
 .DS_Store
 *.egg-info/
@@ -16,3 +16,15 @@ ui/node_modules/
 ui/build/
 ui/.env
 *.log
+
+# Generated artifacts
+test_results.xml
+
+# App binaries (too large for git)
+apps/
+*.apk
+*.ipa
+*.app
+
+# Local notes
+TODO.md

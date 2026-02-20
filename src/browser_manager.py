@@ -109,6 +109,57 @@ class BrowserManager:
         resp = self._send({"action": "get_elements"})
         return resp.get("elements", [])
 
+    def type_text(self, selector: str, text: str, clear: bool = True,
+                  submit: bool = False, delay_ms: int = 50) -> dict:
+        """Type text into an input field."""
+        return self._send({
+            "action": "type_text", "selector": selector, "text": text,
+            "clear": clear, "submit": submit, "delay_ms": delay_ms,
+        })
+
+    def press_key(self, key: str, selector: str | None = None,
+                  wait_ms: int = 800) -> dict:
+        """Press a keyboard key (Tab, Enter, Escape, ArrowDown, etc.)."""
+        cmd = {"action": "press_key", "key": key, "wait_ms": wait_ms}
+        if selector:
+            cmd["selector"] = selector
+        return self._send(cmd)
+
+    def check_page_health(self) -> dict:
+        """Check for broken images, empty links, console errors, a11y issues."""
+        return self._send({"action": "check_page_health"})
+
+    def resize_viewport(self, width: int, height: int) -> dict:
+        """Resize the browser viewport for responsive testing."""
+        return self._send({"action": "resize_viewport", "width": width, "height": height})
+
+    def wait(self, ms: int = 2000) -> dict:
+        """Wait/pause for a specified time to observe transitions."""
+        return self._send({"action": "wait", "ms": ms})
+
+    def get_input_fields(self) -> list[dict]:
+        """Get all input/textarea/select fields on the page."""
+        resp = self._send({"action": "get_input_fields"})
+        return resp.get("fields", [])
+
+    def get_page_inventory(self) -> dict:
+        """Get a structured snapshot of all visible UI elements on the page."""
+        return self._send({"action": "page_inventory"})
+
+    def scroll(self, direction: str = "down", amount: int = 600,
+               selector: str | None = None, wait_ms: int = 1000) -> dict:
+        """Scroll the page or a specific container element."""
+        cmd = {"action": "scroll", "direction": direction,
+               "amount": amount, "wait_ms": wait_ms}
+        if selector:
+            cmd["selector"] = selector
+        return self._send(cmd)
+
+    def hover_element(self, selector: str, wait_ms: int = 1500) -> dict:
+        """Hover over an element and return any revealed tooltips or menus."""
+        resp = self._send({"action": "hover", "selector": selector, "wait_ms": wait_ms})
+        return resp
+
     def click_element(self, selector: str) -> dict:
         """Click an element by selector and return new page metadata."""
         resp = self._send({"action": "click", "selector": selector, "previous_url": self._current_url})

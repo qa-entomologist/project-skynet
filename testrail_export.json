@@ -1,132 +1,134 @@
 {
   "format": "testrail",
   "version": "1.0",
-  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855",
+  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_150439",
   "test_cases": [
     {
-      "title": "Browse Homepage and Navigate Categories",
+      "title": "Video Content Playback",
       "custom_id": "TC-001",
-      "priority_id": 2,
-      "type_id": 1,
-      "custom_preconds": "None",
+      "priority_id": 1,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi TV homepage",
       "custom_steps_separated": [
         {
-          "content": "Navigate to https://books.toscrape.com",
-          "expected": "Homepage loads showing grid of books with categories in left sidebar",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_001_homepage.png"
+          "content": "Navigate to homepage",
+          "expected": "Homepage loads with featured content and navigation"
         },
         {
-          "content": "Click \"Mystery\" category in sidebar",
-          "expected": "Should navigate to Mystery category showing filtered list of mystery books",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_002_before_click_Mystery.png"
+          "content": "Click on any movie/show thumbnail",
+          "expected": "Detail page opens showing title, synopsis, cast, and play button"
         },
         {
-          "content": "Verify category page elements",
-          "expected": "Page should show:\n- \"Mystery\" category title\n- Filtered book grid\n- Breadcrumb navigation\n- Category sidebar still visible",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_004_category_listing.png"
+          "content": "Click \"Play FREE\" button",
+          "expected": "Video player launches"
+        },
+        {
+          "content": "Verify player controls",
+          "expected": "Play/pause, volume, fullscreen, and subtitle controls present"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "View Product Details",
+      "title": "Main Navigation",
       "custom_id": "TC-002",
       "priority_id": 2,
-      "type_id": 2,
-      "custom_preconds": "None",
-      "custom_steps_separated": [
-        {
-          "content": "Navigate to book detail page",
-          "expected": "Product detail page loads showing:\n- Product title and image\n- Price and availability\n- Product information table\n- Add to basket button",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_010_product_detail.png"
-        },
-        {
-          "content": "Verify product information",
-          "expected": "Product information table should show:\n- UPC\n- Product Type\n- Price (excl. tax)\n- Price (incl. tax)\n- Tax\n- Availability\n- Number of reviews",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_010_product_detail.png"
-        }
-      ],
-      "custom_automation_type": 0
-    },
-    {
-      "title": "Category Navigation",
-      "custom_id": "TC-003",
-      "priority_id": 3,
       "type_id": 4,
-      "custom_preconds": "None",
+      "custom_preconds": "User is on Tubi TV homepage",
       "custom_steps_separated": [
         {
-          "content": "Load homepage",
-          "expected": "Homepage loads with category sidebar",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_001_homepage.png"
+          "content": "Click \"Movies\" in header",
+          "expected": "Movies page loads with categories and featured films"
         },
         {
-          "content": "Verify all category links",
-          "expected": "Sidebar should show all book categories as clickable links",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_001_homepage.png"
+          "content": "Click \"TV Shows\" in header",
+          "expected": "TV Shows page loads with series categories"
         },
         {
-          "content": "Click each category",
-          "expected": "Each category should:\n- Update URL with category name\n- Filter book grid to category\n- Show category name in breadcrumbs",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_125855/step_007_product_listing.png"
+          "content": "Click \"Live TV\" in header",
+          "expected": "Live TV page loads with streaming channels"
+        },
+        {
+          "content": "Click \"Browse\" dropdown",
+          "expected": "Genre categories appear in dropdown"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "Empty Category Handling",
+      "title": "Kids Mode",
+      "custom_id": "TC-003",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Click \"Tubi Kids\" in header",
+          "expected": "Switches to kids mode"
+        },
+        {
+          "content": "Verify header changes",
+          "expected": "Header simplifies to Browse, Exit Kids, Register, Sign In"
+        },
+        {
+          "content": "Verify content filtering",
+          "expected": "Only kid-friendly content shown"
+        },
+        {
+          "content": "Click \"Exit Kids\"",
+          "expected": "Returns to normal mode with full content"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Search Functionality",
       "custom_id": "TC-004",
-      "priority_id": 3,
-      "type_id": 6,
-      "custom_preconds": "None",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi TV homepage",
       "custom_steps_separated": [
         {
-          "content": "Navigate to a category with no books",
-          "expected": "Should show \"No books found\" message"
+          "content": "Type valid query in search bar",
+          "expected": "Results appear with relevant titles"
         },
         {
-          "content": "Verify UI elements",
-          "expected": "Category sidebar and navigation should still be present"
+          "content": "Search for \"scooby doo\"",
+          "expected": "Shows Scooby-Doo related content"
+        },
+        {
+          "content": "Submit empty search",
+          "expected": "Shows error message or placeholder"
+        },
+        {
+          "content": "Search with special characters",
+          "expected": "Handles special characters appropriately"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "Invalid Product URLs",
+      "title": "Responsive Design",
       "custom_id": "TC-005",
       "priority_id": 3,
-      "type_id": 7,
-      "custom_preconds": "None",
-      "custom_steps_separated": [
-        {
-          "content": "Navigate to non-existent product URL",
-          "expected": "Should show 404 page"
-        },
-        {
-          "content": "Verify 404 page",
-          "expected": "Should have:\n- Clear error message\n- Navigation options to return home"
-        }
-      ],
-      "custom_automation_type": 0
-    },
-    {
-      "title": "Product Grid Pagination",
-      "custom_id": "TC-006",
-      "priority_id": 3,
       "type_id": 2,
-      "custom_preconds": "None",
+      "custom_preconds": "User is on Tubi TV homepage",
       "custom_steps_separated": [
         {
-          "content": "Navigate to category with >20 books",
-          "expected": "Pagination controls should appear"
+          "content": "View on mobile (375x812)",
+          "expected": "Layout adapts with hamburger menu"
         },
         {
-          "content": "Click next page",
-          "expected": "Should load next set of books"
+          "content": "Check content grid",
+          "expected": "Switches to 2-column layout"
         },
         {
-          "content": "Verify product count",
-          "expected": "Should maintain accurate count across pages"
+          "content": "Verify touch targets",
+          "expected": "Buttons and links appropriately sized"
+        },
+        {
+          "content": "Test menu navigation",
+          "expected": "Mobile menu functions correctly"
         }
       ],
       "custom_automation_type": 0

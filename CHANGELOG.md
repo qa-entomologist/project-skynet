@@ -6,6 +6,44 @@ All notable changes to Project Skynet (Web Cartographer) must be documented in t
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-02-20
+### Added
+- **Mobile Cartographer** — Appium-based agent for Android and iOS native app testing
+  - `src/mobile_manager.py` — Appium wrapper with dual-platform support (tap, swipe, press back, type, screenshot)
+  - `src/mobile_agent.py` — Strands Agent with 9 tools for mobile exploration and QA test case generation
+  - `run_mobile.py` — CLI entry point for APK/IPA/bundle exploration
+- **Datadog push script** (`push_to_datadog.py`) — uploads test results to Datadog CI Test Visibility (JUnit XML) and Datadog Logs API (structured log events)
+
+### Changed
+- Consolidated `SETUP_COMPLETE.md`, `SETUP_GUIDE.md`, `TESTING.md`, `INTEGRATION.md` into `README.md`
+- Deleted redundant documentation files
+- Updated `.gitignore` for mobile binaries, TODO.md, test artifacts
+
+## [0.6.0] - 2026-02-20
+### Added
+- **Full QA interaction toolkit** — 10 new agent tools for comprehensive website testing:
+  - `hover_element` — hover to reveal dropdowns/tooltips, returns new clickable items with CSS selectors
+  - `scroll_page` — vertical and horizontal scrolling (page or container-level)
+  - `type_text` — type into search bars, form fields with realistic keystroke delay
+  - `press_key` — keyboard input (Tab, Enter, Escape, Arrow keys) for accessibility and form testing
+  - `get_form_fields` — discovers all inputs/textareas/selects with labels and selectors
+  - `check_page_health` — detects broken images, missing alt text, console errors, unlabeled inputs
+  - `resize_viewport` — responsive testing at any breakpoint (mobile/tablet/desktop)
+  - `wait_and_observe` — pause to watch animations, loading states, auto-playing content
+  - `click_element` now accepts optional CSS `selector` parameter for clicking dropdown items directly
+- **Page inventory and state diffing system**:
+  - `page_inventory` action in Playwright helper captures structured page layout (header items, content sections, buttons, forms, footer, modals)
+  - `_diff_inventories()` compares current vs. previous scan and reports what changed (added/removed header items, buttons, sections, modals)
+  - scan_page returns `changes_from_previous` with detailed diffs and `ATTENTION` alerts for significant state changes
+- **Smart screenshot logic** — screenshots only taken when page state meaningfully changed; duplicates are skipped
+- **Console error tracking** — JS errors captured from browser launch via injected `console.error` and `window.onerror` hooks
+- **Site-agnostic system prompt** — agent discovers what a site does by observing CTAs, content types, and navigation rather than being told. Works on any website: streaming, e-commerce, SaaS, news, banking, etc.
+
+### Changed
+- System prompt completely rewritten: detective mindset, mandatory exploration checklist, site-type discovery from observation
+- hover_element re-scans DOM after hovering to return newly visible interactive elements
+- Agent tools expanded from 10 to 16
+
 ## [0.5.0] - 2026-02-20
 ### Added
 - **Live auto-refresh visualization** — background HTTP server (`start_viz_server`) serves the `web/` directory so the graph updates in real-time during exploration

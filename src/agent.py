@@ -27,6 +27,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
 graph_store: MemoryGraphStore | Neo4jGraphStore = create_graph_store()
 _current_depth = 0
 _start_domain = ""
+_last_inventory: dict | None = None
+_inventory_history: list[dict] = []
 
 
 def _page_id(url: str) -> str:
@@ -36,6 +38,61 @@ def _page_id(url: str) -> str:
     if parsed.fragment:
         normalized += f"#{parsed.fragment}"
     return hashlib.md5(normalized.encode()).hexdigest()[:12]
+
+
+def _diff_inventories(old: dict | None, new: dict) -> dict:
+    """Compare two page inventories and return what changed."""
+    if old is None:
+        return {"is_first_scan": True, "changes": []}
+
+    changes = []
+    old_header = set(old.get("header_items", []))
+    new_header = set(new.get("header_items", []))
+    added_header = new_header - old_header
+    removed_header = old_header - new_header
+    if added_header:
+        changes.append(f"Header ADDED: {', '.join(sorted(added_header))}")
+    if removed_header:
+        changes.append(f"Header REMOVED: {', '.join(sorted(removed_header))}")
+    if old.get("header_count", 0) != new.get("header_count", 0):
+        changes.append(f"Header item count changed: {old.get('header_count', 0)} → {new.get('header_count', 0)}")
+
+    old_buttons = set(old.get("buttons", []))
+    new_buttons = set(new.get("buttons", []))
+    added_buttons = new_buttons - old_buttons
+    removed_buttons = old_buttons - new_buttons
+    if added_buttons:
+        changes.append(f"Buttons ADDED: {', '.join(sorted(added_buttons))}")
+    if removed_buttons:
+        changes.append(f"Buttons REMOVED: {', '.join(sorted(removed_buttons))}")
+
+    old_sections = set(old.get("content_sections", []))
+    new_sections = set(new.get("content_sections", []))
+    added_sections = new_sections - old_sections
+    if added_sections:
+        changes.append(f"Content sections ADDED: {', '.join(sorted(added_sections))}")
+    if old.get("content_section_count", 0) != new.get("content_section_count", 0):
+        changes.append(f"Content section count: {old.get('content_section_count', 0)} → {new.get('content_section_count', 0)}")
+
+    if old.get("form_field_count", 0) != new.get("form_field_count", 0):
+        changes.append(f"Form fields: {old.get('form_field_count', 0)} → {new.get('form_field_count', 0)}")
+
+    if old.get("active_modal") != new.get("active_modal"):
+        if new.get("active_modal"):
+            changes.append(f"Modal appeared: {new['active_modal'][:100]}")
+        elif old.get("active_modal"):
+            changes.append("Modal dismissed")
+
+    if old.get("page_title") != new.get("page_title"):
+        changes.append(f"Title changed: '{old.get('page_title', '')}' → '{new.get('page_title', '')}'")
+
+    visually_same = len(changes) == 0
+    return {
+        "is_first_scan": False,
+        "changes": changes,
+        "visually_same": visually_same,
+        "significant_change": len(changes) >= 2 or any("REMOVED" in c or "ADDED" in c for c in changes),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -81,17 +138,45 @@ def navigate_to_url(url: str) -> str:
 
 @tool
 def scan_page(page_type: str, observations: str) -> str:
-    """Scan the current page to discover all interactive elements.
-    Also takes a screenshot and records your QA observations.
+    """Scan the current page to discover all interactive elements AND take a
+    structured inventory of the page layout. Compares the current page to the
+    previous scan and reports WHAT CHANGED. Only takes a screenshot if the
+    page is meaningfully different from the last one.
 
     Args:
-        page_type: What type of page this is (e.g. "homepage", "product_listing", "product_detail", "cart", "checkout", "login", "search_results", "category", "settings", "error_page", "form")
-        observations: Your detailed QA observations about this page. Include: what content is displayed, what state the page is in, any notable UI elements, forms, error messages, loading states, accessibility concerns, or anything a QA tester should verify.
+        page_type: What type of page this is (e.g. "homepage", "product_listing", "product_detail", "cart", "checkout", "login", "search_results", "category", "settings", "error_page", "form", "kids_mode", "player")
+        observations: Your detailed QA observations. IMPORTANT: Don't just say "page loaded". Describe what you SEE: how many header items, what buttons are present, what content sections exist, what changed from the previous page. Compare to what you saw before.
     """
-    safe_type = page_type.replace(" ", "_")
-    screenshot_path = browser.take_screenshot(label=safe_type)
+    global _last_inventory
+
     elements = browser.get_interactive_elements()
     back_nav = browser.detect_back_button()
+
+    try:
+        inventory = browser.get_page_inventory()
+    except Exception:
+        inventory = {}
+
+    diff = _diff_inventories(_last_inventory, inventory)
+
+    should_screenshot = (
+        diff.get("is_first_scan", True)
+        or diff.get("significant_change", False)
+        or not diff.get("visually_same", False)
+    )
+
+    screenshot_path = ""
+    if should_screenshot:
+        safe_type = page_type.replace(" ", "_")
+        screenshot_path = browser.take_screenshot(label=safe_type)
+    else:
+        screenshot_path = "(skipped — page visually same as previous scan)"
+
+    _last_inventory = inventory
+    _inventory_history.append({
+        "url": browser.url, "title": browser.title,
+        "page_type": page_type, "inventory": inventory,
+    })
 
     page_id = _page_id(browser.url)
 
@@ -104,50 +189,398 @@ def scan_page(page_type: str, observations: str) -> str:
 
     actions_text = "\n".join(element_summary[:40])
 
-    graph_store.update_page(
-        page_id,
-        screenshot_path=screenshot_path,
-        element_count=len(elements),
-        visited=True,
-        page_type=page_type,
-        observations=observations,
-        available_actions=actions_text,
-    )
+    if screenshot_path and not screenshot_path.startswith("("):
+        graph_store.update_page(
+            page_id,
+            screenshot_path=screenshot_path,
+            element_count=len(elements),
+            visited=True,
+            page_type=page_type,
+            observations=observations,
+            available_actions=actions_text,
+        )
+    else:
+        graph_store.update_page(
+            page_id,
+            element_count=len(elements),
+            visited=True,
+            page_type=page_type,
+            observations=observations,
+            available_actions=actions_text,
+        )
 
     result = {
         "page_title": browser.title,
         "page_url": browser.url,
         "page_id": page_id,
         "page_type": page_type,
-        "screenshot_saved": screenshot_path,
+        "screenshot": screenshot_path,
         "interactive_elements_count": len(elements),
         "interactive_elements": element_summary[:40],
         "back_navigation": back_nav,
+        "page_inventory": {
+            "header_items": inventory.get("header_items", []),
+            "header_count": inventory.get("header_count", 0),
+            "content_sections": inventory.get("content_sections", [])[:10],
+            "content_section_count": inventory.get("content_section_count", 0),
+            "buttons": inventory.get("buttons", [])[:10],
+            "form_fields": inventory.get("form_field_count", 0),
+            "footer_links": inventory.get("footer_links", [])[:10],
+            "active_modal": inventory.get("active_modal"),
+        },
+        "changes_from_previous": diff,
         "graph_stats": graph_store.get_stats(),
     }
+
+    if diff.get("changes"):
+        result["ATTENTION"] = (
+            "PAGE STATE CHANGED! Investigate these differences:\n" +
+            "\n".join(f"  • {c}" for c in diff["changes"]) +
+            "\n\nAsk yourself: WHY did these changes happen? What does this tell you about the site's behavior? "
+            "Is this a mode change (like Kids mode)? A filter? A different user state?"
+        )
+
     return json.dumps(result, indent=2)
 
 
 @tool
-def click_element(element_index: int, reason: str, expected_result: str) -> str:
-    """Click an interactive element on the current page by its index number
-    (from scan_page results). Records the action and your expectation in the graph.
-    Works with both traditional multi-page sites AND single-page apps (SPAs)
-    where clicks change content without changing the URL.
+def scroll_page(direction: str, reason: str, amount: int = 600, selector: str = "") -> str:
+    """Scroll the page or a specific container to reveal hidden content.
+    Use this to discover content below the fold, scroll horizontal carousels,
+    or explore lazy-loaded sections.
 
     Args:
-        element_index: The index number of the element to click (from scan_page)
-        reason: Why you chose to click this element (for the exploration log)
-        expected_result: What you expect to happen after clicking (e.g. "Should navigate to product detail page", "Should open a modal", "Should add item to cart")
+        direction: One of "down", "up", "left", "right"
+        reason: Why you are scrolling (e.g. "Reveal more content rows below the fold", "Scroll carousel to see more items")
+        amount: Pixels to scroll (default 600). Use ~300 for gentle scrolls, ~800 for large jumps.
+        selector: Optional CSS selector for a scrollable container (e.g. a carousel row). Leave empty to scroll the whole page.
     """
-    global _current_depth
+    sel = selector if selector else None
+    try:
+        result = browser.scroll(direction=direction, amount=amount, selector=sel)
+    except Exception as e:
+        return json.dumps({"error": f"Scroll failed: {e}"})
 
+    screenshot = browser.take_screenshot(label=f"scroll_{direction}")
+
+    output = {
+        "status": "scrolled",
+        "direction": direction,
+        "amount": amount,
+        "reason": reason,
+        "screenshot": screenshot,
+        "scroll_position": {
+            "x": result.get("scrollX", 0),
+            "y": result.get("scrollY", 0),
+        },
+        "page_size": {
+            "total_height": result.get("scrollHeight", 0),
+            "total_width": result.get("scrollWidth", 0),
+            "viewport_height": result.get("viewportHeight", 0),
+            "viewport_width": result.get("viewportWidth", 0),
+        },
+        "at_boundary": {
+            "top": result.get("atTop", False),
+            "bottom": result.get("atBottom", False),
+            "left": result.get("atLeft", False),
+            "right": result.get("atRight", False),
+        },
+    }
+    return json.dumps(output, indent=2)
+
+
+@tool
+def type_text(selector_or_index: str, text: str, reason: str,
+              clear: bool = True, submit: bool = False) -> str:
+    """Type text into an input field, search bar, or textarea. Use this to test
+    search functionality, fill out forms, enter invalid data, etc.
+
+    Args:
+        selector_or_index: Either a CSS selector (e.g. 'input[name="search"]') or
+            an element index from scan_page (e.g. "5"). For form fields, use
+            get_form_fields first to find selectors.
+        text: The text to type
+        reason: Why you are typing this (e.g. "Search for a movie", "Enter invalid email to test validation")
+        clear: Whether to clear the field first (default True)
+        submit: Whether to press Enter after typing (default False)
+    """
+    selector = selector_or_index
+    if selector_or_index.isdigit():
+        elements = browser.get_interactive_elements()
+        idx = int(selector_or_index)
+        for el in elements:
+            if el["index"] == idx:
+                selector = el["selector"]
+                break
+
+    try:
+        result = browser.type_text(selector, text, clear=clear, submit=submit)
+    except Exception as e:
+        return json.dumps({"error": f"Type failed: {e}"})
+
+    label = f"typed_{text.replace(' ', '_')[:30]}"
+    screenshot = browser.take_screenshot(label=label)
+
+    return json.dumps({
+        "status": "typed",
+        "text": text,
+        "submitted": submit,
+        "current_value": result.get("current_value", ""),
+        "reason": reason,
+        "screenshot": screenshot,
+        "url_after": result.get("url", ""),
+        "title_after": result.get("title", ""),
+    }, indent=2)
+
+
+@tool
+def press_key(key: str, reason: str) -> str:
+    """Press a keyboard key. Use for accessibility testing (Tab navigation),
+    dismissing modals (Escape), submitting forms (Enter), navigating
+    dropdowns (ArrowDown/ArrowUp), etc.
+
+    Args:
+        key: Key to press. Examples: "Tab", "Enter", "Escape", "ArrowDown",
+             "ArrowUp", "ArrowLeft", "ArrowRight", "Space", "Backspace",
+             "Shift+Tab" (reverse tab). For key combos use "+" separator.
+        reason: Why you are pressing this key (e.g. "Tab to next form field for a11y test",
+                "Escape to dismiss modal", "Enter to submit search")
+    """
+    try:
+        result = browser.press_key(key)
+    except Exception as e:
+        return json.dumps({"error": f"Key press failed: {e}"})
+
+    screenshot = browser.take_screenshot(label=f"key_{key.replace('+', '_')}")
+
+    return json.dumps({
+        "status": "key_pressed",
+        "key": key,
+        "reason": reason,
+        "screenshot": screenshot,
+        "url_after": result.get("url", ""),
+        "title_after": result.get("title", ""),
+    }, indent=2)
+
+
+@tool
+def get_form_fields() -> str:
+    """Discover all input fields, textareas, and select dropdowns on the current
+    page. Returns their selectors, types, placeholders, labels, and current values.
+    Use this before type_text to find the right selector for a field.
+    """
+    fields = browser.get_input_fields()
+    if not fields:
+        return json.dumps({"fields": [], "message": "No input fields found on this page"})
+
+    summary = []
+    for f in fields:
+        desc = f"[{f['index']}] <{f['tag']}>"
+        if f.get("type"):
+            desc += f" type={f['type']}"
+        if f.get("label"):
+            desc += f" label=\"{f['label']}\""
+        elif f.get("placeholder"):
+            desc += f" placeholder=\"{f['placeholder']}\""
+        elif f.get("aria_label"):
+            desc += f" aria-label=\"{f['aria_label']}\""
+        if f.get("name"):
+            desc += f" name={f['name']}"
+        if f.get("required"):
+            desc += " REQUIRED"
+        if f.get("value"):
+            desc += f" value=\"{f['value'][:30]}\""
+        desc += f" selector=\"{f['selector']}\""
+        summary.append(desc)
+
+    return json.dumps({
+        "field_count": len(fields),
+        "fields": summary,
+        "raw": fields,
+    }, indent=2)
+
+
+@tool
+def check_page_health(reason: str = "General page health audit") -> str:
+    """Run a health check on the current page. Detects broken images, empty links,
+    missing alt text, unlabeled form inputs, and JavaScript console errors.
+    Use this on every major page to catch quality issues.
+
+    Args:
+        reason: Context for why you're checking (e.g. "Audit homepage for a11y issues")
+    """
+    try:
+        health = browser.check_page_health()
+    except Exception as e:
+        return json.dumps({"error": f"Health check failed: {e}"})
+
+    issues_found = []
+    if health.get("broken_images", 0) > 0:
+        issues_found.append(f"{health['broken_images']} broken images")
+    if health.get("missing_alt_text", 0) > 0:
+        issues_found.append(f"{health['missing_alt_text']} images missing alt text")
+    if health.get("empty_links", 0) > 0:
+        issues_found.append(f"{health['empty_links']} empty/dead links")
+    if health.get("unlabeled_inputs", 0) > 0:
+        issues_found.append(f"{health['unlabeled_inputs']} unlabeled form inputs")
+    if health.get("console_errors"):
+        issues_found.append(f"{len(health['console_errors'])} console errors")
+
+    return json.dumps({
+        "reason": reason,
+        "summary": {
+            "total_images": health.get("total_images", 0),
+            "broken_images": health.get("broken_images", 0),
+            "missing_alt_text": health.get("missing_alt_text", 0),
+            "total_links": health.get("total_links", 0),
+            "empty_links": health.get("empty_links", 0),
+            "total_inputs": health.get("total_inputs", 0),
+            "unlabeled_inputs": health.get("unlabeled_inputs", 0),
+            "focusable_elements": health.get("focusable_elements", 0),
+        },
+        "issues_found": issues_found,
+        "is_healthy": len(issues_found) == 0,
+        "console_errors": health.get("console_errors", [])[:10],
+        "detailed_issues": health.get("issues", [])[:10],
+    }, indent=2)
+
+
+@tool
+def resize_viewport(width: int, height: int, reason: str) -> str:
+    """Resize the browser viewport to test responsive design at different breakpoints.
+    Common sizes: mobile (375x812), tablet (768x1024), desktop (1280x900), wide (1920x1080).
+
+    Args:
+        width: Viewport width in pixels
+        height: Viewport height in pixels
+        reason: Why testing this size (e.g. "Test mobile responsive layout")
+    """
+    try:
+        result = browser.resize_viewport(width, height)
+    except Exception as e:
+        return json.dumps({"error": f"Resize failed: {e}"})
+
+    screenshot = browser.take_screenshot(label=f"viewport_{width}x{height}")
+
+    return json.dumps({
+        "status": "resized",
+        "viewport": {"width": width, "height": height},
+        "reason": reason,
+        "screenshot": screenshot,
+    }, indent=2)
+
+
+@tool
+def wait_and_observe(seconds: float, reason: str) -> str:
+    """Pause and observe the page for a specified duration, then take a screenshot.
+    Use for: watching loading animations finish, observing auto-playing carousels,
+    checking timed notifications/toasts, verifying lazy-load behavior after scrolling.
+
+    Args:
+        seconds: How long to wait (0.5 to 10)
+        reason: What you expect to observe (e.g. "Wait for carousel auto-advance", "Watch loading spinner complete")
+    """
+    ms = int(min(max(seconds, 0.5), 10) * 1000)
+    try:
+        browser.wait(ms=ms)
+    except Exception as e:
+        return json.dumps({"error": f"Wait failed: {e}"})
+
+    screenshot = browser.take_screenshot(label="observe")
+
+    return json.dumps({
+        "status": "observed",
+        "waited_seconds": ms / 1000,
+        "reason": reason,
+        "screenshot": screenshot,
+    }, indent=2)
+
+
+@tool
+def hover_element(element_index: int, reason: str) -> str:
+    """Hover over an interactive element to reveal tooltips, dropdown menus,
+    preview cards, or hover states. IMPORTANT: After hovering, if new items
+    appear (dropdown menu, submenu, etc.), use click_element with the
+    selector returned in 'new_clickable_items' to interact with them.
+
+    Args:
+        element_index: The index number of the element to hover (from scan_page)
+        reason: What you hope to discover (e.g. "Check for dropdown menu", "See tooltip text", "Preview card on hover")
+    """
     elements = browser.get_interactive_elements()
     target = None
     for el in elements:
         if el["index"] == element_index:
             target = el
             break
+
+    if not target:
+        return json.dumps({"error": f"Element index {element_index} not found on page"})
+
+    label = (target["text"] or "element").replace(" ", "_")[:40]
+
+    try:
+        hover_result = browser.hover_element(target["selector"])
+    except Exception as e:
+        return json.dumps({"error": f"Hover failed: {e}"})
+
+    screenshot = browser.take_screenshot(label=f"hover_{label}")
+
+    after_elements = browser.get_interactive_elements()
+    before_selectors = {el["selector"] for el in elements}
+    new_items = []
+    for el in after_elements:
+        if el["selector"] not in before_selectors and el["text"]:
+            new_items.append({
+                "text": el["text"],
+                "selector": el["selector"],
+                "tag": el["tag"],
+                "href": el.get("href", ""),
+            })
+
+    result = {
+        "status": "ok",
+        "hovered": target["text"],
+        "reason": reason,
+        "screenshot": screenshot,
+        "revealed_tooltips": hover_result.get("revealed_tooltips", []),
+        "revealed_menu_items": hover_result.get("revealed_menu_items", []),
+        "new_clickable_items": new_items[:20],
+        "has_new_content": bool(new_items or hover_result.get("revealed_tooltips") or hover_result.get("revealed_menu_items")),
+        "ACTION_REQUIRED": (
+            f"Hover revealed {len(new_items)} new clickable items! "
+            "Use click_element with selector= parameter to click items in the dropdown. "
+            "Do NOT let the dropdown dismiss without exploring it."
+        ) if new_items else "No new clickable items appeared.",
+    }
+    return json.dumps(result, indent=2)
+
+
+@tool
+def click_element(element_index: int, reason: str, expected_result: str,
+                  selector: str = "") -> str:
+    """Click an interactive element on the current page. You can click by index
+    (from scan_page) OR by CSS selector (from hover_element's new_clickable_items).
+
+    Args:
+        element_index: The index number of the element to click (from scan_page). Use -1 if using selector instead.
+        reason: Why you chose to click this element (for the exploration log)
+        expected_result: What you expect to happen after clicking (e.g. "Should navigate to product detail page", "Should open a modal", "Should play the video")
+        selector: Optional CSS selector to click directly (use for dropdown items revealed by hover_element, or specific elements). When provided, element_index is ignored.
+    """
+    global _current_depth
+
+    elements = browser.get_interactive_elements()
+    target = None
+
+    if selector:
+        target = {"selector": selector, "text": selector.split('"')[-2] if '"' in selector else selector[:40],
+                  "tag": "element", "href": "", "index": -1}
+    else:
+        for el in elements:
+            if el["index"] == element_index:
+                target = el
+                break
 
     if not target:
         return json.dumps({"error": f"Element index {element_index} not found on page"})
@@ -309,6 +742,29 @@ def get_exploration_status() -> str:
     visited, current depth, etc. Use this to decide when to stop.
     """
     stats = graph_store.get_stats()
+    total_pages = stats.get("total_pages", 0)
+    total_edges = stats.get("total_edges", 0)
+
+    if total_pages < 10:
+        guidance = (
+            f"KEEP EXPLORING — only {total_pages} pages discovered so far. "
+            "Aim for at least 10-15 pages before generating test cases. "
+            "Try: hover over nav items to find dropdowns, click into content "
+            "detail pages, explore search, check footer links."
+        )
+    elif total_pages < 15:
+        guidance = (
+            f"Good progress ({total_pages} pages). Consider exploring a few "
+            "more areas: content detail pages, search results, account pages, "
+            "help/FAQ, footer links. Hover over key elements before clicking."
+        )
+    else:
+        guidance = (
+            f"Solid exploration ({total_pages} pages, {total_edges} actions). "
+            "You may proceed to generate_test_cases when ready, or explore "
+            "any remaining unvisited areas."
+        )
+
     return json.dumps({
         **stats,
         "current_depth": _current_depth,
@@ -316,6 +772,7 @@ def get_exploration_status() -> str:
         "max_pages": MAX_PAGES,
         "current_url": browser.url,
         "current_title": browser.title,
+        "guidance": guidance,
     }, indent=2)
 
 
@@ -479,90 +936,138 @@ def _testrail_type(type_str: str) -> int:
 # System prompt
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are the Web Cartographer QA Agent — an autonomous AI that explores websites, captures visual evidence, and produces comprehensive QA test cases ready for TestRail.
+SYSTEM_PROMPT = """You are the Web Cartographer QA Agent — an autonomous AI QA engineer that can thoroughly test ANY website. You explore with obsessive curiosity, notice every detail, compare states, and ask "why did this change?"
 
-## Your Mission
-Given a starting URL, systematically explore the website to discover all user flows, capture screenshots at every step as visual evidence of expected behavior, then generate a complete QA test suite with detailed test cases, steps, expected results, and screenshot references.
+## CORE MINDSET: BE A DETECTIVE, NOT A TOURIST
 
-## Phase 1: Exploration
-1. Navigate to the provided URL
-2. Scan each page — classify its type and record detailed QA observations:
-   - What content is displayed and its state
-   - Forms, inputs, and validation behavior
-   - Error states, empty states, loading indicators
-   - Navigation elements and their destinations
-   - Accessibility concerns (missing labels, contrast, keyboard nav)
-   - A screenshot is automatically captured with each scan
-3. Click through different paths using depth-first exploration:
-   - For each click, state what you EXPECT to happen (this becomes the test assertion)
-   - Before/after screenshots are captured automatically on every click
-   - Scan the resulting page and note what ACTUALLY happened
-   - Continue deeper until dead end or max depth, then go back
-4. Prioritize diverse flow coverage:
-   - Happy path flows (main user journeys)
-   - Navigation flows (header, sidebar, footer, breadcrumbs)
-   - Category/filter/search flows
-   - Account/auth flows (note existence even if you skip login)
-   - Error/edge case triggers (404 pages, empty states)
+After EVERY action, ask yourself:
+- "What changed from what I saw before?"
+- "Why did it change? What caused it?"
+- "What does this tell me about how the site works?"
+- "Is this the same page in a different state/mode?"
 
-## Phase 2: Test Case Generation
-After exploration, call generate_test_cases to extract all flows, then call write_test_report with a comprehensive markdown report.
+When scan_page returns `changes_from_previous`, those diffs are critical intelligence. If the header item count changed, buttons appeared or disappeared, or the page title shifted — that means something happened. Investigate it. Document exactly what changed and why.
 
-### Report Structure
-1. **Test Suite Summary** — site overview, pages discovered, flows mapped, screenshot directory
-2. **Test Cases** — one per discovered flow, formatted as:
+### Smart observations (GOOD):
+- "Header has 7 items: [list them]. After clicking [X], header changed to 4 items — [Y, Z, W] disappeared, new 'Exit' button appeared. This is a mode change that filters the entire site experience."
+- "Dropdown revealed 12 clickable items. Clicked into 'Category A' — grid of 24 items with thumbnails, titles, and tags. Clicked first item — detail page with full description, metadata, and primary CTA button."
+- "Search returned 8 results for 'test query'. Searched 'xyzzzz' — got 'No results found' with a suggestion to browse instead."
 
+### Lazy observations (BAD — never do this):
+- "Homepage loaded successfully." (says nothing)
+- "Clicked X, page looks similar." (what's similar? what's different?)
+- "Navigation works." (how? what happened?)
+
+## SMART SCREENSHOTS
+scan_page automatically compares the current page layout to your last scan. If the page is visually identical (same header, buttons, sections), NO screenshot is taken. Screenshots are only captured when something meaningfully changed. This means every screenshot is evidence of a real transition, not a duplicate.
+
+## PHASE 1: DISCOVERY — UNDERSTAND WHAT THE SITE IS
+
+You don't know what this site does. Your FIRST job is to figure it out by observing:
+1. **scan_page** the homepage — read the header items, content sections, buttons, CTAs
+2. **Identify the site's purpose** from what you see:
+   - What is the primary call-to-action? (Watch, Buy, Sign Up, Try Free, Read, Book, etc.)
+   - What kind of content is displayed? (Videos, products, articles, listings, tools, etc.)
+   - Is there a search bar? Login/signup? Shopping cart icon? Dashboard?
+3. **Determine the P0 test** — whatever the site's primary CTA is, THAT is the #1 thing to test:
+   - If CTA says "Watch" or "Play" → test the playback flow
+   - If CTA says "Add to Cart" or "Buy" → test the purchase flow
+   - If CTA says "Sign Up" or "Get Started" → test the onboarding flow
+   - If CTA says "Search" or "Find" → test the search/results flow
+   - If CTA says "Read" or "Learn" → test the content detail flow
+   - Whatever the main action is — follow it through to completion
+
+## PHASE 2: SYSTEMATIC EXPLORATION
+
+### 1. CLICK EVERY NAV ITEM
+Read the header/navigation. Whatever items are there — click EACH one, one by one.
+For each destination, scan_page and document what kind of page it is.
+Do NOT skip any nav item. Do NOT assume you know what it does — click it and find out.
+
+### 2. INTERACT WITH HOVER DROPDOWNS
+When hover_element reveals new items (`new_clickable_items` in the response):
+- These are clickable items inside the dropdown — click 2-3 of them using click_element(element_index=-1, selector="...")
+- Do NOT let the dropdown dismiss without clicking something inside it
+- After exploring one dropdown item, go_back and hover again to explore another
+
+### 3. TEST THE PRIMARY FUNCTION
+Whatever you identified as the site's core purpose — test the full flow end-to-end:
+- Click the primary CTA or a content item
+- Follow the flow to its natural conclusion (detail page, player, cart, form completion)
+- Document every step: what appeared, what controls exist, what the expected behavior is
+
+### 4. TEST SEARCH (if search exists)
+- Find the search input (may be behind a search icon — click it first)
+- get_form_fields to locate the input selector
+- type_text with a query relevant to the site's content
+- scan_page the results
+- type_text with gibberish to test the "no results" experience
+
+### 5. DETECT AND TEST MODE/STATE CHANGES
+When clicking something causes `changes_from_previous` to show header items appearing/disappearing:
+- This is a mode or state change (kids mode, admin view, language switch, category filter, etc.)
+- Document exactly what changed: items removed, items added, content filtering
+- Find and test the way to EXIT the mode / return to default state
+
+### 6. TEST FORMS AND AUTH PAGES
+- Visit any login, register, signup, or contact pages
+- get_form_fields to inventory all inputs (types, labels, placeholders, required flags)
+- press_key "Tab" through fields to verify keyboard navigation and focus order
+- Do NOT submit real credentials, but document the complete form structure
+
+### 7. SCROLL TO DISCOVER HIDDEN CONTENT
+- scroll_page down 2-3 times on every major page to see below-the-fold content
+- scroll_page right on any horizontal content rows/carousels
+- Scroll to the footer — document help links, legal links, social links, contact info
+
+### 8. CHECK PAGE HEALTH
+- check_page_health on homepage + at least 2 other key pages
+- Documents: broken images, missing alt text, console errors, unlabeled form inputs
+
+### 9. TEST RESPONSIVE DESIGN
+- resize_viewport to mobile (375x812) on the homepage
+- scan_page and compare: does layout change? Nav collapse? Content reflow?
+- resize_viewport back to 1280x900 when done
+
+## PHASE 3: TEST CASE GENERATION
+After thorough exploration (25+ tool calls minimum), call generate_test_cases then write_test_report.
+
+Generate test cases covering EVERYTHING you discovered:
+1. **Primary function** (P0) — the site's core action, end-to-end
+2. **Navigation** (P1) — one TC per nav destination
+3. **Dropdown/menu interactions** (P1) — hover → click flows
+4. **Search** (P1) — valid query, no results, edge cases
+5. **Mode/state changes** (P1) — any discovered mode switches
+6. **Content detail** (P1) — clicking into items, viewing details
+7. **Forms/auth** (P1) — field inventory, tab order, validation cues
+8. **Responsive** (P2) — layout changes at mobile breakpoint
+9. **Page health/a11y** (P2) — broken assets, missing labels, console errors
+10. **Edge cases** (P3) — empty states, special characters, boundary conditions
+
+### Report format:
 ```
-### TC-XXX: [Test Case Title]
-**Priority:** P0/P1/P2/P3
-**Type:** Smoke / Functional / Navigation / E2E
-**Preconditions:** [What must be true before starting]
+### TC-XXX: [Title]
+**Priority:** P0-P3
+**Type:** Smoke / Functional / Navigation / E2E / Accessibility / Responsive / Mode
 
 | Step | Action | Expected Result | Screenshot |
 |------|--------|-----------------|------------|
-| 1    | Navigate to [URL] | Page loads with [description] | `step_001_homepage.png` |
-| 2    | Click "[element text]" | Navigates to [expected page] | `step_002_before_click_X.png`, `step_003_after_click_X.png` |
-| ...  | ... | ... | ... |
 ```
 
-3. **Edge Case & Negative Test Cases** — based on your observations
-4. **Coverage Matrix** — table mapping pages to test cases that cover them
-5. **Screenshot Inventory** — list of all captured screenshots with descriptions
+## Phase 4: TestRail Export
+Call export_testrail_json with JSON array of ALL test cases.
 
-## Phase 3: TestRail Export
-After writing the test report, call export_testrail_json with a JSON array of test cases. Each test case object must have:
-- "id": "TC-001"
-- "title": "Test case title"
-- "priority": 1-4 (1=Critical/P0, 2=High/P1, 3=Medium/P2, 4=Low/P3)
-- "type": "Functional" / "Smoke" / "Navigation" / "E2E" / "Edge" / "Negative"
-- "preconditions": "What must be true before starting"
-- "steps": [{{ "action": "...", "expected": "...", "screenshot": "filename.png" or null }}]
+## SPA Awareness
+Many modern sites change content without changing the URL. The tools detect this automatically via DOM fingerprinting. Always scan_page after clicking to capture what changed.
 
-## SPA (Single Page App) Awareness
-Many modern websites are SPAs built with React, Vue, or Angular. On these sites:
-- Clicking a nav item may change the visible content WITHOUT changing the URL
-- The click_element tool detects this automatically via content fingerprinting
-- When click_element returns "is_spa_view": true, a new view WAS detected even though the URL didn't change
-- When click_element returns "content_changed": false AND "url_changed": false, the click truly had no effect — try a different element
-- Always scan_page after a SPA view change to discover the new view's elements
-- SPA views are recorded in the graph just like regular pages
-
-## Navigation Rules
-- Stay on the same domain — don't follow external links
-- Use the site's own back buttons/logo before browser back
-- Recognize common UI patterns: logos link home, breadcrumbs show path, back arrows go up one level
-- Skip duplicate pages (same URL or near-identical content)
-- Skip login/signup actions but note they exist as test cases
-- Skip downloads, mailto, tel links
+## Rules
+- Stay on the same domain — do not follow external links
+- Visit but do not submit login/signup forms
+- Skip mailto, tel, and download links
 - Depth limit: {max_depth} | Page limit: {max_pages}
+- Do NOT generate test cases until you've completed the exploration checklist
 
-## Workflow
-1. navigate_to_url → scan_page (with observations) → click_element (with expected result) → repeat
-2. When at dead end: go_back → scan_page → try next path
-3. Periodically: get_exploration_status
-4. When done exploring: generate_test_cases → write_test_report → export_testrail_json
-
-Start exploring now!
+Begin. Observe the site. Figure out what it is. Test it like it matters.
 """.format(max_depth=MAX_DEPTH, max_pages=MAX_PAGES)
 
 
@@ -579,7 +1084,15 @@ def create_explorer_agent() -> Agent:
         tools=[
             navigate_to_url,
             scan_page,
+            scroll_page,
+            hover_element,
             click_element,
+            type_text,
+            press_key,
+            get_form_fields,
+            check_page_health,
+            resize_viewport,
+            wait_and_observe,
             go_back,
             get_exploration_status,
             generate_test_cases,
