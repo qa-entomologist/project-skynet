@@ -26,6 +26,16 @@ def test_reproduction(
     """
     Test if a crash is reproducible in the target environment.
     
+    Environment: alpha or production
+    Service: The service being tested (e.g., playback-service)
+    Website/App: Determined by service type:
+        - Web services: Tested via browser automation
+        - Mobile services: Tested via mobile app testing
+        - API services: Tested via API calls
+    """
+    """
+    Test if a crash is reproducible in the target environment.
+    
     Args:
         crash_details: Crash information
         reproduction_steps: Steps to reproduce the crash
@@ -41,6 +51,9 @@ def test_reproduction(
             - error_encountered: str | None
     """
     logger.info(f"Testing crash reproduction in {environment} environment...")
+    logger.info(f"  Service: {service or 'unknown'}")
+    logger.info(f"  Environment URL: https://{environment}.example.com" if environment in ["alpha", "production"] else f"  Environment: {environment}")
+    logger.info(f"  Testing method: {'Browser automation' if 'web' in (service or '').lower() else 'API/Service testing'}")
     
     start_time = time.time()
     test_steps = []

@@ -18,6 +18,7 @@ EVALS_DIR = BASE_DIR / "evals"
 DD_API_KEY = os.getenv("DD_API_KEY", "")
 DD_APP_KEY = os.getenv("DD_APP_KEY", "")
 DD_SITE = os.getenv("DD_SITE", "datadoghq.com")
+DD_MOCK_SERVER = os.getenv("DD_MOCK_SERVER", "")  # Mock server URL (e.g., http://localhost:8080)
 
 # ── AWS Bedrock ──
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
