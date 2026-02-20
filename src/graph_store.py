@@ -25,6 +25,8 @@ class PageNode:
     timestamp: float = field(default_factory=time.time)
     visited: bool = False
     depth: int = 0
+    observations: str = ""
+    available_actions: str = ""
 
 
 @dataclass
@@ -35,6 +37,7 @@ class ActionEdge:
     element_text: str = ""
     element_selector: str = ""
     timestamp: float = field(default_factory=time.time)
+    observation: str = ""
 
 
 class MemoryGraphStore:
@@ -83,6 +86,63 @@ class MemoryGraphStore:
             "total_edges": len(self.edges),
             "domains": list({p.domain for p in self.pages.values()}),
         }
+
+    def get_flows(self) -> list[list[dict]]:
+        """Extract all distinct user flows (paths) from the graph.
+
+        Each flow is a sequence of steps: page -> action -> page -> action -> ...
+        Only follows forward edges (click/navigate), not back edges.
+        """
+        forward_edges = [e for e in self.edges if e.action_type != "back"]
+
+        adj: dict[str, list[ActionEdge]] = {}
+        for edge in forward_edges:
+            adj.setdefault(edge.from_id, []).append(edge)
+
+        roots = set(self.pages.keys())
+        for edge in forward_edges:
+            roots.discard(edge.to_id)
+        if not roots:
+            roots = {next(iter(self.pages))} if self.pages else set()
+
+        flows = []
+
+        def dfs(node_id: str, path: list[dict]):
+            page = self.pages.get(node_id)
+            if not page:
+                return
+
+            step = {
+                "page_id": page.id,
+                "url": page.url,
+                "title": page.title,
+                "page_type": page.page_type,
+                "observations": page.observations,
+                "available_actions": page.available_actions,
+            }
+            path.append(step)
+
+            outgoing = adj.get(node_id, [])
+            if not outgoing:
+                flows.append(list(path))
+            else:
+                for edge in outgoing:
+                    action_step = {
+                        "action": edge.action_type,
+                        "element_text": edge.element_text,
+                        "element_selector": edge.element_selector,
+                        "observation": edge.observation,
+                    }
+                    path.append(action_step)
+                    dfs(edge.to_id, path)
+                    path.pop()
+
+            path.pop()
+
+        for root in roots:
+            dfs(root, [])
+
+        return flows
 
     def to_json(self) -> str:
         """Export the full graph as JSON for visualization."""

@@ -98,7 +98,13 @@ def main():
     try:
         agent = create_explorer_agent()
 
-        prompt = f"Explore the website at {url}. Systematically discover all major user flows, page types, and navigation paths. When done, export the exploration graph and provide a summary of what you found."
+        prompt = (
+            f"Explore the website at {url}. Systematically discover all major user flows, "
+            f"page types, and navigation paths. For every page you visit, classify its type "
+            f"and record detailed QA observations. For every click, state what you expect to happen. "
+            f"When done exploring, call generate_test_cases, then call write_test_report with "
+            f"a comprehensive QA test suite covering all discovered flows."
+        )
 
         logger.info("Starting exploration...")
         result = agent(prompt)
@@ -113,6 +119,10 @@ def main():
             f.write(graph_json)
         logger.info("Graph exported to %s", export_path)
         logger.info("Open web/index.html in a browser to visualize the exploration graph.")
+
+        report_path = os.path.join(os.path.dirname(__file__), "test_cases.md")
+        if os.path.exists(report_path):
+            logger.info("QA Test Report: %s", report_path)
 
     except KeyboardInterrupt:
         logger.info("\nExploration interrupted. Saving current progress...")
