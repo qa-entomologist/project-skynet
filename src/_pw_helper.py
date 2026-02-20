@@ -122,6 +122,27 @@ DETECT_BACK_JS = """() => {
 }"""
 
 
+CONTENT_FINGERPRINT_JS = """() => {
+    const title = document.title || '';
+    const h1s = Array.from(document.querySelectorAll('h1'))
+        .map(h => h.innerText.trim()).filter(Boolean).join('|');
+    const h2s = Array.from(document.querySelectorAll('h2'))
+        .map(h => h.innerText.trim()).filter(Boolean).join('|');
+
+    const mainEl = document.querySelector(
+        'main, [role="main"], #content, #root > div, .main-content, article'
+    );
+    const source = mainEl || document.body;
+    const mainText = source.innerText.trim().substring(0, 500);
+
+    const navItems = Array.from(document.querySelectorAll(
+        'nav a[aria-current], .active, [class*="selected"], [class*="active"]'
+    )).map(el => el.innerText.trim()).filter(Boolean).join('|');
+
+    return { title, h1s, h2s, mainText, navItems };
+}"""
+
+
 def respond(data):
     sys.stdout.write(json.dumps(data) + "\n")
     sys.stdout.flush()
@@ -213,6 +234,10 @@ def main():
             elif action == "detect_back":
                 result = page.evaluate(DETECT_BACK_JS)
                 respond({"result": result})
+
+            elif action == "content_fingerprint":
+                result = page.evaluate(CONTENT_FINGERPRINT_JS)
+                respond({"fingerprint": result})
 
             elif action == "quit":
                 respond({"status": "bye"})

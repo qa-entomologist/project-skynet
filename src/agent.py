@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import time
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 from strands import Agent, tool
 from strands.models import BedrockModel
@@ -30,9 +30,11 @@ _start_domain = ""
 
 
 def _page_id(url: str) -> str:
-    """Stable ID from a normalized URL."""
+    """Stable ID from a normalized URL. Includes hash fragments for SPA routing."""
     parsed = urlparse(url)
     normalized = f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
+    if parsed.fragment:
+        normalized += f"#{parsed.fragment}"
     return hashlib.md5(normalized.encode()).hexdigest()[:12]
 
 
@@ -130,6 +132,8 @@ def scan_page(page_type: str, observations: str) -> str:
 def click_element(element_index: int, reason: str, expected_result: str) -> str:
     """Click an interactive element on the current page by its index number
     (from scan_page results). Records the action and your expectation in the graph.
+    Works with both traditional multi-page sites AND single-page apps (SPAs)
+    where clicks change content without changing the URL.
 
     Args:
         element_index: The index number of the element to click (from scan_page)
@@ -157,6 +161,8 @@ def click_element(element_index: int, reason: str, expected_result: str) -> str:
     safe_text = (target["text"] or "element").replace(" ", "_")[:40]
     before_screenshot = browser.take_screenshot(label=f"before_click_{safe_text}")
 
+    old_fingerprint = browser.get_content_fingerprint()
+
     try:
         meta = browser.click_element(target["selector"])
     except Exception as e:
@@ -170,14 +176,31 @@ def click_element(element_index: int, reason: str, expected_result: str) -> str:
     # Also check for SPA navigation (DOM/title changed without URL change)
     is_spa_nav = meta.get("is_spa_navigation", False) or meta.get("dom_changed", False) or meta.get("title_changed", False)
 
-    if url_changed or is_spa_nav:
+    new_fingerprint = browser.get_content_fingerprint()
+    content_changed = (new_fingerprint != old_fingerprint)
+
+    view_changed = url_changed or content_changed or is_spa_nav
+    is_spa_view = (content_changed or is_spa_nav) and not url_changed
+
+    if is_spa_view:
+        new_page_id = f"spa_{new_fingerprint}"
+        spa_label = target["text"][:40] or "SPA view"
+        logger.info("SPA view change detected: %s (fingerprint %s)", spa_label, new_fingerprint)
+
+    if view_changed:
         _current_depth += 1
+
+        display_url = new_url
+        if is_spa_view:
+            display_url = f"{new_url}#spa:{target['text'][:30]}"
+
         page = PageNode(
             id=new_page_id,
-            url=new_url,
+            url=display_url,
             title=meta["title"],
             domain=meta["domain"],
             path=meta["path"],
+            page_type="spa_view" if is_spa_view else "unknown",
             depth=_current_depth,
             screenshot_path=after_screenshot,
         )
@@ -186,7 +209,7 @@ def click_element(element_index: int, reason: str, expected_result: str) -> str:
         edge = ActionEdge(
             from_id=old_page_id,
             to_id=new_page_id,
-            action_type="click",
+            action_type="spa_click" if is_spa_view else "click",
             element_text=target["text"],
             element_selector=target["selector"],
             observation=f"Expected: {expected_result}",
@@ -206,7 +229,8 @@ def click_element(element_index: int, reason: str, expected_result: str) -> str:
         "screenshot_before": before_screenshot,
         "screenshot_after": after_screenshot,
         "url_changed": url_changed,
-        "is_spa_navigation": is_spa_nav and not url_changed,
+        "content_changed": content_changed,
+        "is_spa_view": is_spa_view,
         "is_new_page": is_new,
         "new_url": new_url,
         "new_title": meta["title"],
@@ -340,7 +364,6 @@ def generate_test_cases() -> str:
                 "screenshot": p.screenshot_path,
             })
 
-    # Also export the graph
     graph_json = graph_store.to_json()
     graph_path = os.path.join(PROJECT_ROOT, "web", "graph_data.json")
     with open(graph_path, "w") as f:
@@ -515,9 +538,20 @@ After writing the test report, call export_testrail_json with a JSON array of te
 - "preconditions": "What must be true before starting"
 - "steps": [{{ "action": "...", "expected": "...", "screenshot": "filename.png" or null }}]
 
+## SPA (Single Page App) Awareness
+Many modern websites are SPAs built with React, Vue, or Angular. On these sites:
+- Clicking a nav item may change the visible content WITHOUT changing the URL
+- The click_element tool detects this automatically via content fingerprinting
+- When click_element returns "is_spa_view": true, a new view WAS detected even though the URL didn't change
+- When click_element returns "content_changed": false AND "url_changed": false, the click truly had no effect — try a different element
+- Always scan_page after a SPA view change to discover the new view's elements
+- SPA views are recorded in the graph just like regular pages
+
 ## Navigation Rules
 - Stay on the same domain — don't follow external links
 - Use the site's own back buttons/logo before browser back
+- Recognize common UI patterns: logos link home, breadcrumbs show path, back arrows go up one level
+- Skip duplicate pages (same URL or near-identical content)
 - Skip login/signup actions but note they exist as test cases
 - Skip downloads, mailto, tel links
 - Depth limit: {max_depth} | Page limit: {max_pages}

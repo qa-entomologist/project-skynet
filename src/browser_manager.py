@@ -7,6 +7,7 @@ which runs tools in worker threads.
 import json
 import os
 import subprocess
+import sys
 import time
 import hashlib
 from urllib.parse import urlparse
@@ -36,7 +37,7 @@ class BrowserManager:
         self._step_counter = 0
 
         self._proc = subprocess.Popen(
-            ["python3", _HELPER_SCRIPT, str(HEADLESS).lower()],
+            [sys.executable, _HELPER_SCRIPT, str(HEADLESS).lower()],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -127,6 +128,13 @@ class BrowserManager:
         resp = self._send({"action": "detect_back"})
         result = resp.get("result")
         return result
+
+    def get_content_fingerprint(self) -> str:
+        """Get a hash of the visible page content to detect SPA view changes."""
+        resp = self._send({"action": "content_fingerprint"})
+        fp_data = resp.get("fingerprint", {})
+        raw = json.dumps(fp_data, sort_keys=True)
+        return hashlib.md5(raw.encode()).hexdigest()[:16]
 
 
 # Global instance

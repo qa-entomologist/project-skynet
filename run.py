@@ -11,6 +11,10 @@ import json
 import logging
 import os
 import sys
+import threading
+import webbrowser
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, HTTPServer
 
 from dotenv import load_dotenv
 
@@ -49,6 +53,31 @@ def setup_datadog_telemetry():
         logger.warning("Failed to initialize Datadog telemetry: %s", e)
 
 
+def start_viz_server(web_dir: str, port: int = 8080) -> HTTPServer | None:
+    """Start a background HTTP server to serve the visualization at web_dir."""
+    handler = partial(SimpleHTTPRequestHandler, directory=web_dir)
+    handler.log_message = lambda *_args, **_kwargs: None  # silence request logs
+
+    try:
+        server = HTTPServer(("127.0.0.1", port), handler)
+    except OSError:
+        for fallback_port in range(port + 1, port + 10):
+            try:
+                server = HTTPServer(("127.0.0.1", fallback_port), handler)
+                port = fallback_port
+                break
+            except OSError:
+                continue
+        else:
+            logger.warning("Could not find an open port for the visualization server")
+            return None
+
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    logger.info("Live visualization: http://127.0.0.1:%d", port)
+    return server
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Web Cartographer - AI agent that explores websites and maps user flows"
@@ -59,6 +88,8 @@ def main():
     parser.add_argument("--neo4j", action="store_true", help="Use Neo4j for graph storage")
     parser.add_argument("--headed", action="store_true", help="Run browser in headed mode (visible)")
     parser.add_argument("--no-datadog", action="store_true", help="Disable Datadog telemetry")
+    parser.add_argument("--no-viz", action="store_true", help="Disable live visualization server")
+    parser.add_argument("--viz-port", type=int, default=8080, help="Port for visualization server (default: 8080)")
     args = parser.parse_args()
 
     if args.max_depth:
@@ -94,6 +125,14 @@ def main():
     logger.info("  Max Depth: %s | Max Pages: %s", src.config.MAX_DEPTH, src.config.MAX_PAGES)
     logger.info("=" * 60)
 
+    viz_server = None
+    web_dir = os.path.join(os.path.dirname(__file__), "web")
+    if not args.no_viz:
+        viz_server = start_viz_server(web_dir, port=args.viz_port)
+        if viz_server:
+            viz_url = f"http://127.0.0.1:{viz_server.server_address[1]}"
+            webbrowser.open(viz_url)
+
     browser.start()
     try:
         agent = create_explorer_agent()
@@ -118,7 +157,10 @@ def main():
         with open(export_path, "w") as f:
             f.write(graph_json)
         logger.info("Graph exported to %s", export_path)
-        logger.info("Open web/index.html in a browser to visualize the exploration graph.")
+        if viz_server:
+            logger.info("Visualization: http://127.0.0.1:%d", viz_server.server_address[1])
+        else:
+            logger.info("Open web/index.html in a browser to visualize the exploration graph.")
 
         report_path = os.path.join(os.path.dirname(__file__), "test_cases.md")
         if os.path.exists(report_path):
@@ -144,6 +186,8 @@ def main():
 
     finally:
         browser.stop()
+        if viz_server:
+            viz_server.shutdown()
         logger.info("Browser closed.")
 
 
