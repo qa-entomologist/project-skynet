@@ -78,12 +78,11 @@ def scan_page() -> str:
     """Scan the current page to discover all interactive elements (links, buttons, etc).
     Also takes a screenshot for the exploration map. Call this after navigating to a new page.
     """
-    meta = browser.page.title(), browser.page.url
     screenshot_path = browser.take_screenshot()
     elements = browser.get_interactive_elements()
     back_nav = browser.detect_back_button()
 
-    page_id = _page_id(browser.page.url)
+    page_id = _page_id(browser.url)
     graph_store.update_page(
         page_id,
         screenshot_path=screenshot_path,
@@ -99,8 +98,8 @@ def scan_page() -> str:
         element_summary.append(desc)
 
     result = {
-        "page_title": meta[0],
-        "page_url": meta[1],
+        "page_title": browser.title,
+        "page_url": browser.url,
         "page_id": page_id,
         "screenshot_saved": screenshot_path,
         "interactive_elements_count": len(elements),
@@ -132,7 +131,7 @@ def click_element(element_index: int, reason: str) -> str:
     if not target:
         return json.dumps({"error": f"Element index {element_index} not found on page"})
 
-    old_url = browser.page.url
+    old_url = browser.url
     old_page_id = _page_id(old_url)
 
     if graph_store.page_count() >= MAX_PAGES:
@@ -199,7 +198,7 @@ def go_back(method: str = "auto") -> str:
     """
     global _current_depth
 
-    old_url = browser.page.url
+    old_url = browser.url
     old_page_id = _page_id(old_url)
 
     if method == "auto":
@@ -226,7 +225,7 @@ def go_back(method: str = "auto") -> str:
         browser.go_back()
         method_used = "browser_back"
 
-    meta = {"url": browser.page.url, "title": browser.page.title()}
+    meta = {"url": browser.url, "title": browser.title}
     new_page_id = _page_id(meta["url"])
 
     if _current_depth > 0:
@@ -261,8 +260,8 @@ def get_exploration_status() -> str:
         "current_depth": _current_depth,
         "max_depth": MAX_DEPTH,
         "max_pages": MAX_PAGES,
-        "current_url": browser.page.url,
-        "current_title": browser.page.title(),
+        "current_url": browser.url,
+        "current_title": browser.title,
     }, indent=2)
 
 
@@ -338,7 +337,7 @@ Start exploring now!
 def create_explorer_agent() -> Agent:
     """Create and return the Web Cartographer agent."""
     model = BedrockModel(
-        model_id="us.anthropic.claude-sonnet-4-20250514-v1:0",
+        model_id="anthropic.claude-3-5-sonnet-20241022-v2:0",
         region_name=AWS_REGION,
     )
 
