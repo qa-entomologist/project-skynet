@@ -5,7 +5,8 @@ import RecommendationCard from './components/RecommendationCard';
 import RunHistory from './components/RunHistory';
 import TelemetryDashboard from './components/TelemetryDashboard';
 
-const API_BASE = '/api';
+// Use full URL - proxy can be unreliable
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
 function App() {
   const [activeTab, setActiveTab] = useState('assess');
@@ -29,9 +30,22 @@ function App() {
   // Fetch services on mount
   useEffect(() => {
     fetch(`${API_BASE}/services`)
-      .then(r => r.json())
+      .then(async (r) => {
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+        }
+        const contentType = r.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await r.text();
+          throw new Error(`Expected JSON but got: ${text.substring(0, 100)}`);
+        }
+        return r.json();
+      })
       .then(data => setServices(data.services || []))
-      .catch(() => {});
+      .catch((err) => {
+        console.error('Failed to fetch services:', err);
+        setError(`Cannot connect to API server. Make sure the server is running on port 8000. Error: ${err.message}`);
+      });
   }, []);
 
   const fetchRuns = useCallback(() => {
@@ -73,14 +87,29 @@ function App() {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.detail || 'Assessment failed');
+        let errMessage = 'Assessment failed';
+        try {
+          const err = await response.json();
+          errMessage = err.detail || errMessage;
+        } catch (e) {
+          const text = await response.text();
+          errMessage = text || `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errMessage);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Expected JSON but got: ${text.substring(0, 100)}`);
       }
 
       const data = await response.json();
       setResult(data);
     } catch (err) {
-      setError(err.message);
+      const errorMsg = err.message || 'Unknown error occurred';
+      setError(errorMsg);
+      console.error('Assessment error:', err);
     } finally {
       setLoading(false);
     }

@@ -75,15 +75,24 @@ The Release Revert Risk Advisor analyzes past rollback incidents, compares them 
 
 ### Run Release Revert Risk Advisor
 
-```bash
-# CLI mode
-python3 run_risk_advisor.py --feature "playback-buffer-v2" --service "playback-service" --platform "ios"
+**Important**: For the web UI to work, you need to start the API server first!
 
-# Start API server + UI
+```bash
+# Terminal 1: Start the API server
 python3 run_risk_advisor.py --server --port 8000
+# Or use the helper script:
+./start_server.sh
+
+# Terminal 2: Start the React UI (optional, if you want dev mode)
+cd ui
+npm start
+# Opens on http://localhost:3000
+
+# CLI mode (no server needed)
+python3 run_risk_advisor.py --feature "playback-buffer-v2" --service "playback-service" --platform "ios"
 ```
 
-Then open http://localhost:8000 in your browser for the interactive dashboard.
+**Note**: The React UI connects to `http://localhost:8000/api`. Make sure the server is running before using the web interface.
 
 ### API Endpoints
 
