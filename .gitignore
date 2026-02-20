@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+screenshots/*.png
+web/graph_data.json
+.DS_Store
+*.egg-info/
+dist/
+build/

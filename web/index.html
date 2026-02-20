@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Cartographer - Exploration Graph</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/vis-network.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/vis-network.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 1px solid #2a2a4a;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #00d2ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .subtitle {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #00d2ff;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #3a3a5a;
+            border-radius: 6px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #2a2a4a;
+            border-color: #00d2ff;
+        }
+
+        .btn.active {
+            background: #00d2ff22;
+            border-color: #00d2ff;
+            color: #00d2ff;
+        }
+
+        .main {
+            display: flex;
+            height: calc(100vh - 65px);
+        }
+
+        #graph-container {
+            flex: 1;
+            background: #0a0a0f;
+        }
+
+        .sidebar {
+            width: 340px;
+            background: #111122;
+            border-left: 1px solid #2a2a4a;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .sidebar h3 {
+            font-size: 14px;
+            color: #00d2ff;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .page-card {
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-card:hover {
+            border-color: #00d2ff;
+            background: #1a1a3e;
+        }
+
+        .page-card.selected {
+            border-color: #7b2ff7;
+            background: #1a1a3e;
+        }
+
+        .page-card .title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .page-card .url {
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .page-card .meta {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .page-card .badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #2a2a4a;
+            color: #aaa;
+        }
+
+        .page-card .badge.depth {
+            background: #7b2ff722;
+            color: #7b2ff7;
+        }
+
+        .screenshot-preview {
+            margin-top: 12px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #2a2a4a;
+        }
+
+        .screenshot-preview img {
+            width: 100%;
+            display: block;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #555;
+        }
+
+        .empty-state p {
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .empty-state code {
+            background: #1a1a2e;
+            padding: 8px 16px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #00d2ff;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Web Cartographer</h1>
+            <div class="subtitle">AI-Powered Website Exploration Map</div>
+        </div>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="stat-pages">0</div>
+                <div class="stat-label">Pages</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="stat-edges">0</div>
+                <div class="stat-label">Connections</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="stat-domains">0</div>
+                <div class="stat-label">Domains</div>
+            </div>
+        </div>
+        <div class="controls">
+            <button class="btn" onclick="loadGraph()">Reload Data</button>
+            <button class="btn" id="btn-auto" onclick="toggleAutoRefresh()">Auto-Refresh: OFF</button>
+            <button class="btn" onclick="network && network.fit()">Fit View</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div id="graph-container">
+            <div class="empty-state" id="empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+                <p>Waiting for exploration data...</p>
+                <code>python run.py https://www.example.com</code>
+            </div>
+        </div>
+        <div class="sidebar">
+            <h3>Discovered Pages</h3>
+            <div id="page-list"></div>
+
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#00d2ff"></div> Page</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#7b2ff7"></div> Home</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#ff6b6b"></div> Deep (depth 3+)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let network = null;
+    let autoRefresh = false;
+    let autoRefreshInterval = null;
+
+    function nodeColor(node) {
+        if (node.depth === 0) return { background: '#7b2ff7', border: '#9b4fff', highlight: { background: '#9b4fff', border: '#b06fff' } };
+        if (node.depth >= 3) return { background: '#ff6b6b', border: '#ff8a8a', highlight: { background: '#ff8a8a', border: '#ffaaaa' } };
+        return { background: '#00d2ff', border: '#33ddff', highlight: { background: '#33ddff', border: '#66eeff' } };
+    }
+
+    function edgeColor(edge) {
+        if (edge.action_type === 'back') return { color: '#ff6b6b44', highlight: '#ff6b6b' };
+        return { color: '#00d2ff44', highlight: '#00d2ff' };
+    }
+
+    function truncate(str, len) {
+        if (!str) return '';
+        return str.length > len ? str.substring(0, len) + '...' : str;
+    }
+
+    async function loadGraph() {
+        try {
+            const resp = await fetch('graph_data.json?t=' + Date.now());
+            if (!resp.ok) return;
+            const data = await resp.json();
+            renderGraph(data);
+        } catch (e) {
+            // File not ready yet
+        }
+    }
+
+    function renderGraph(data) {
+        if (!data.nodes || data.nodes.length === 0) return;
+
+        document.getElementById('empty-state').style.display = 'none';
+
+        document.getElementById('stat-pages').textContent = data.nodes.length;
+        document.getElementById('stat-edges').textContent = data.edges.length;
+        const domains = new Set(data.nodes.map(n => n.domain));
+        document.getElementById('stat-domains').textContent = domains.size;
+
+        const nodes = new vis.DataSet(data.nodes.map(n => ({
+            id: n.id,
+            label: truncate(n.title || n.path || n.url, 30),
+            title: `${n.title}\n${n.url}\nDepth: ${n.depth}`,
+            color: nodeColor(n),
+            font: { color: '#e0e0e0', size: 11 },
+            shape: n.depth === 0 ? 'diamond' : 'dot',
+            size: n.depth === 0 ? 20 : Math.max(8, 16 - n.depth * 2),
+            _data: n,
+        })));
+
+        const edges = new vis.DataSet(data.edges.map((e, i) => ({
+            id: 'e' + i,
+            from: e.from_id,
+            to: e.to_id,
+            label: truncate(e.element_text, 20),
+            color: edgeColor(e),
+            arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+            font: { color: '#666', size: 9, strokeWidth: 0 },
+            smooth: { type: 'curvedCW', roundness: 0.2 },
+            dashes: e.action_type === 'back',
+        })));
+
+        const container = document.getElementById('graph-container');
+
+        if (network) {
+            network.setData({ nodes, edges });
+        } else {
+            network = new vis.Network(container, { nodes, edges }, {
+                physics: {
+                    forceAtlas2Based: {
+                        gravitationalConstant: -40,
+                        centralGravity: 0.005,
+                        springLength: 150,
+                        springConstant: 0.08,
+                    },
+                    solver: 'forceAtlas2Based',
+                    stabilization: { iterations: 150 },
+                },
+                interaction: {
+                    hover: true,
+                    tooltipDelay: 200,
+                },
+                edges: {
+                    width: 1.5,
+                },
+            });
+
+            network.on('click', function (params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    const node = nodes.get(nodeId);
+                    highlightPageCard(nodeId);
+                }
+            });
+        }
+
+        renderPageList(data.nodes);
+    }
+
+    function renderPageList(pages) {
+        const list = document.getElementById('page-list');
+        list.innerHTML = '';
+
+        const sorted = [...pages].sort((a, b) => a.depth - b.depth);
+        for (const p of sorted) {
+            const card = document.createElement('div');
+            card.className = 'page-card';
+            card.dataset.id = p.id;
+            card.innerHTML = `
+                <div class="title">${p.title || '(untitled)'}</div>
+                <div class="url">${p.url}</div>
+                <div class="meta">
+                    <span class="badge depth">depth ${p.depth}</span>
+                    <span class="badge">${p.element_count || 0} elements</span>
+                </div>
+            `;
+            card.onclick = () => {
+                if (network) {
+                    network.selectNodes([p.id]);
+                    network.focus(p.id, { scale: 1.2, animation: true });
+                }
+                highlightPageCard(p.id);
+            };
+            list.appendChild(card);
+        }
+    }
+
+    function highlightPageCard(id) {
+        document.querySelectorAll('.page-card').forEach(c => c.classList.remove('selected'));
+        const card = document.querySelector(`.page-card[data-id="${id}"]`);
+        if (card) {
+            card.classList.add('selected');
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function toggleAutoRefresh() {
+        autoRefresh = !autoRefresh;
+        const btn = document.getElementById('btn-auto');
+        if (autoRefresh) {
+            btn.textContent = 'Auto-Refresh: ON';
+            btn.classList.add('active');
+            autoRefreshInterval = setInterval(loadGraph, 3000);
+        } else {
+            btn.textContent = 'Auto-Refresh: OFF';
+            btn.classList.remove('active');
+            clearInterval(autoRefreshInterval);
+        }
+    }
+
+    loadGraph();
+    </script>
+</body>
+</html>
