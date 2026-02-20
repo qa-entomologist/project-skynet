@@ -1,0 +1,192 @@
+# ─────────────────────────────────────────────────────────────────────
+# Release Revert Risk Advisor – Historical Revert Data
+# This file captures past rollback/revert events for pattern matching.
+# In production, this would come from Datadog incidents, deploy markers,
+# or CI/CD event streams.
+# ─────────────────────────────────────────────────────────────────────
+
+reverts:
+  - id: "REV-2025-001"
+    date: "2025-01-12T14:32:00Z"
+    feature: "playback-buffer-optimization"
+    service: "playback-service"
+    platform: "ios"
+    description: "Playback start failure rate spiked 4x after buffer pool refactor"
+    trigger: "monitor_alert"
+    time_to_detection_min: 12
+    time_to_rollback_min: 28
+    impacted_slis:
+      error_rate: { baseline: 0.8, peak: 3.2, unit: "%" }
+      playback_start_failures: { baseline: 120, peak: 510, unit: "count/min" }
+      p95_latency: { baseline: 450, peak: 1800, unit: "ms" }
+    root_cause: "Buffer pool exhaustion under high concurrency on older devices"
+    tags: ["playback", "ios", "latency", "memory"]
+
+  - id: "REV-2025-002"
+    date: "2025-02-03T09:15:00Z"
+    feature: "ad-waterfall-v2"
+    service: "ad-server"
+    platform: "android"
+    description: "Ad fill rate dropped 35% and ad error rate tripled"
+    trigger: "incident_manual"
+    time_to_detection_min: 45
+    time_to_rollback_min: 90
+    impacted_slis:
+      ad_error_rate: { baseline: 2.1, peak: 7.8, unit: "%" }
+      error_rate: { baseline: 1.0, peak: 4.5, unit: "%" }
+      p99_latency: { baseline: 800, peak: 3200, unit: "ms" }
+    root_cause: "New waterfall logic mis-prioritised VAST tags causing timeout cascades"
+    tags: ["ads", "android", "timeout", "waterfall"]
+
+  - id: "REV-2025-003"
+    date: "2025-03-18T22:05:00Z"
+    feature: "search-reranking-ml"
+    service: "search-api"
+    platform: "all"
+    description: "p99 latency exceeded SLO for 40 minutes after ML reranker deploy"
+    trigger: "monitor_alert"
+    time_to_detection_min: 8
+    time_to_rollback_min: 18
+    impacted_slis:
+      p99_latency: { baseline: 350, peak: 2100, unit: "ms" }
+      p95_latency: { baseline: 200, peak: 980, unit: "ms" }
+      error_rate: { baseline: 0.5, peak: 1.8, unit: "%" }
+    root_cause: "ML model inference cold-start latency under load; no warm-up step"
+    tags: ["search", "latency", "ml", "cold-start"]
+
+  - id: "REV-2025-004"
+    date: "2025-04-05T16:45:00Z"
+    feature: "user-profile-cache-migration"
+    service: "user-service"
+    platform: "all"
+    description: "Cache miss storm caused DB connection pool exhaustion"
+    trigger: "monitor_alert"
+    time_to_detection_min: 5
+    time_to_rollback_min: 15
+    impacted_slis:
+      error_rate: { baseline: 0.3, peak: 12.5, unit: "%" }
+      p95_latency: { baseline: 80, peak: 4500, unit: "ms" }
+      p99_latency: { baseline: 150, peak: 8000, unit: "ms" }
+    root_cause: "Cache key format change invalidated all entries simultaneously"
+    tags: ["cache", "database", "connection-pool", "migration"]
+
+  - id: "REV-2025-005"
+    date: "2025-05-22T11:20:00Z"
+    feature: "recommendation-engine-v3"
+    service: "reco-service"
+    platform: "web"
+    description: "Crash rate on web increased 6x due to null pointer in new reco response format"
+    trigger: "incident_manual"
+    time_to_detection_min: 30
+    time_to_rollback_min: 55
+    impacted_slis:
+      crash_rate: { baseline: 0.05, peak: 0.32, unit: "%" }
+      error_rate: { baseline: 0.4, peak: 5.1, unit: "%" }
+    root_cause: "Breaking change in recommendation API response schema; missing backward compat"
+    tags: ["recommendations", "web", "crash", "api-contract"]
+
+  - id: "REV-2025-006"
+    date: "2025-07-10T03:30:00Z"
+    feature: "live-event-streaming-upgrade"
+    service: "streaming-service"
+    platform: "ios"
+    description: "Live stream playback failures during primetime event"
+    trigger: "monitor_alert"
+    time_to_detection_min: 3
+    time_to_rollback_min: 10
+    impacted_slis:
+      playback_start_failures: { baseline: 50, peak: 2200, unit: "count/min" }
+      error_rate: { baseline: 0.6, peak: 8.9, unit: "%" }
+      p95_latency: { baseline: 300, peak: 5500, unit: "ms" }
+    root_cause: "CDN routing change + new codec negotiation caused HLS manifest fetch failures"
+    tags: ["streaming", "live", "ios", "cdn", "hls"]
+
+  - id: "REV-2025-007"
+    date: "2025-09-01T13:00:00Z"
+    feature: "checkout-flow-redesign"
+    service: "payment-service"
+    platform: "web"
+    description: "Payment success rate dropped 15% after checkout UI refactor"
+    trigger: "incident_manual"
+    time_to_detection_min: 60
+    time_to_rollback_min: 120
+    impacted_slis:
+      error_rate: { baseline: 1.2, peak: 6.7, unit: "%" }
+      p99_latency: { baseline: 1200, peak: 4800, unit: "ms" }
+    root_cause: "New checkout flow broke session continuity for 3D-Secure payment redirects"
+    tags: ["payments", "web", "checkout", "3ds", "session"]
+
+  - id: "REV-2025-008"
+    date: "2025-10-15T08:45:00Z"
+    feature: "content-ingestion-pipeline-v2"
+    service: "ingestion-service"
+    platform: "all"
+    description: "Content metadata pipeline stalled; new content not appearing for 2 hours"
+    trigger: "monitor_alert"
+    time_to_detection_min: 20
+    time_to_rollback_min: 40
+    impacted_slis:
+      error_rate: { baseline: 0.2, peak: 45.0, unit: "%" }
+      p95_latency: { baseline: 500, peak: 30000, unit: "ms" }
+    root_cause: "Schema migration on ingestion queue caused deserialization failures"
+    tags: ["ingestion", "pipeline", "schema", "queue"]
+
+# ── Metric baselines (last 30 days average per service) ──
+baselines:
+  playback-service:
+    error_rate: 0.8
+    crash_rate: 0.04
+    p95_latency: 450
+    p99_latency: 680
+    playback_start_failures: 120
+    ad_error_rate: 1.5
+  ad-server:
+    error_rate: 1.0
+    crash_rate: 0.02
+    p95_latency: 320
+    p99_latency: 800
+    playback_start_failures: 0
+    ad_error_rate: 2.1
+  search-api:
+    error_rate: 0.5
+    crash_rate: 0.01
+    p95_latency: 200
+    p99_latency: 350
+    playback_start_failures: 0
+    ad_error_rate: 0
+  user-service:
+    error_rate: 0.3
+    crash_rate: 0.01
+    p95_latency: 80
+    p99_latency: 150
+    playback_start_failures: 0
+    ad_error_rate: 0
+  reco-service:
+    error_rate: 0.4
+    crash_rate: 0.05
+    p95_latency: 180
+    p99_latency: 400
+    playback_start_failures: 0
+    ad_error_rate: 0
+  streaming-service:
+    error_rate: 0.6
+    crash_rate: 0.03
+    p95_latency: 300
+    p99_latency: 550
+    playback_start_failures: 50
+    ad_error_rate: 0.8
+  payment-service:
+    error_rate: 1.2
+    crash_rate: 0.01
+    p95_latency: 600
+    p99_latency: 1200
+    playback_start_failures: 0
+    ad_error_rate: 0
+  ingestion-service:
+    error_rate: 0.2
+    crash_rate: 0.005
+    p95_latency: 500
+    p99_latency: 900
+    playback_start_failures: 0
+    ad_error_rate: 0
+

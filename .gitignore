@@ -1,4 +1,5 @@
 .venv/
+venv/
 __pycache__/
 *.pyc
 .env
@@ -8,3 +9,10 @@ web/graph_data.json
 *.egg-info/
 dist/
 build/
+
+# Risk Advisor
+evals/*.json
+ui/node_modules/
+ui/build/
+ui/.env
+*.log
