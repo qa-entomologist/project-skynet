@@ -24,6 +24,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from agent.main import run_agent
+from agent.auto_qa_workflow import run_auto_qa_workflow
 from agent.config import EVALS_DIR, REVERT_HISTORY_PATH
 from agent.observability import get_telemetry
 
@@ -73,6 +74,14 @@ class AssessResponse(BaseModel):
     evidence: list[str]
     agent_metrics: dict[str, Any]
     timestamp: str
+
+
+class AutoQARequest(BaseModel):
+    service: str = Field(..., description="Service to monitor")
+    platform: str | None = Field(None, description="Platform filter (ios/android/web)")
+    lookback_minutes: int = Field(15, description="How far back to look for anomalies")
+    test_environment: str = Field("alpha", description="Environment to test in (alpha/production)")
+    code_repo_path: str | None = Field(None, description="Path to code repository for analysis")
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -180,6 +189,28 @@ async def list_services():
             "services_with_reverts": list(revert_services),
             "total_reverts": len(reverts),
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/auto-qa")
+async def run_auto_qa(req: AutoQARequest):
+    """
+    Run automatic QA workflow:
+    1. Detect crashes/anomalies from Datadog
+    2. Analyze code to determine reproducibility
+    3. Test reproduction in alpha/production
+    4. Generate QA report
+    """
+    try:
+        result = run_auto_qa_workflow(
+            service=req.service,
+            platform=req.platform,
+            lookback_minutes=req.lookback_minutes,
+            test_environment=req.test_environment,
+            code_repo_path=req.code_repo_path,
+        )
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

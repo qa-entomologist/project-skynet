@@ -85,23 +85,85 @@ def start_server(args):
     uvicorn.run("server.app:app", host="0.0.0.0", port=args.port, reload=True)
 
 
+def run_auto_qa(args):
+    """Run the auto-QA workflow."""
+    from agent.auto_qa_workflow import run_auto_qa_workflow
+    
+    print("\n" + "═" * 60)
+    print("  🤖 Auto-QA Workflow — Automatic Crash Detection & Testing")
+    print("═" * 60 + "\n")
+    
+    result = run_auto_qa_workflow(
+        service=args.service,
+        platform=args.platform,
+        lookback_minutes=args.lookback_minutes,
+        test_environment=args.test_environment,
+        code_repo_path=args.code_repo_path,
+    )
+    
+    # Pretty print results
+    print("\n" + "─" * 60)
+    print(f"  Status: {result.get('status', 'unknown')}")
+    print(f"  Service: {result.get('service', 'unknown')}")
+    print(f"  Anomalies Detected: {result.get('anomalies_detected', 0)}")
+    print(f"  Crashes Processed: {result.get('crashes_processed', 0)}")
+    
+    if result.get("summary"):
+        summary = result["summary"]
+        print(f"\n  📊 Summary:")
+        print(f"     Overall Risk Score: {summary.get('overall_risk_score', 0)}/100")
+        print(f"     Recommendation: {summary.get('recommendation', 'N/A')}")
+        print(f"     {summary.get('summary_message', '')}")
+    
+    if result.get("results"):
+        print(f"\n  🔍 Crash Analysis Results:")
+        for i, crash_result in enumerate(result["results"][:3], 1):
+            print(f"\n     {i}. Crash ID: {crash_result.get('crash_id', 'unknown')}")
+            print(f"        Status: {crash_result.get('status', 'unknown')}")
+            if crash_result.get("code_analysis"):
+                ca = crash_result["code_analysis"]
+                print(f"        Reproducible: {ca.get('is_reproducible', False)}")
+                print(f"        Confidence: {ca.get('confidence', 0):.0%}")
+            if crash_result.get("reproduction_test"):
+                rt = crash_result["reproduction_test"]
+                print(f"        Test Result: {'✅ Reproduced' if rt.get('reproduced') else '❌ Not Reproduced'}")
+            if crash_result.get("qa_recommendation"):
+                print(f"        QA Recommendation: {crash_result['qa_recommendation'][:100]}...")
+    
+    print("\n" + "═" * 60)
+    print(f"  📄 Full report saved to: evals/run_{result['run_id']}.json")
+    print("═" * 60 + "\n")
+    
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Release Revert Risk Advisor — AI Agent"
     )
     parser.add_argument("--server", action="store_true", help="Start the API server")
     parser.add_argument("--port", type=int, default=8000, help="Server port (default: 8000)")
+    parser.add_argument("--auto-qa", action="store_true", help="Run auto-QA workflow (detect & test crashes)")
+    
+    # Risk assessment args
     parser.add_argument("--feature", default="playback-buffer-v2", help="Feature name")
     parser.add_argument("--service", default="playback-service", help="Service tag")
     parser.add_argument("--platform", default=None, help="Platform (ios/android/web)")
     parser.add_argument("--window", type=int, default=30, help="History window in days")
     parser.add_argument("--tags", default=None, help="Comma-separated tags")
     parser.add_argument("--post-deploy", type=int, default=60, help="Post-deploy minutes")
+    
+    # Auto-QA args
+    parser.add_argument("--lookback-minutes", type=int, default=15, help="Lookback window for anomalies (minutes)")
+    parser.add_argument("--test-environment", default="alpha", help="Test environment (alpha/production)")
+    parser.add_argument("--code-repo-path", default=None, help="Path to code repository for analysis")
 
     args = parser.parse_args()
 
     if args.server:
         start_server(args)
+    elif args.auto_qa:
+        run_auto_qa(args)
     else:
         run_assessment(args)
 
