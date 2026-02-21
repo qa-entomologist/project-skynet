@@ -54,8 +54,13 @@ def setup_datadog_telemetry():
 
 
 def start_viz_server(web_dir: str, port: int = 8080) -> HTTPServer | None:
-    """Start a background HTTP server to serve the visualization at web_dir."""
-    handler = partial(SimpleHTTPRequestHandler, directory=web_dir)
+    """Start a background HTTP server to serve the visualization.
+
+    Serves from the project root so the dashboard can access test_cases*.md,
+    testrail_export*.json, screenshots/, and web/ artifacts.
+    """
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    handler = partial(SimpleHTTPRequestHandler, directory=project_root)
     handler.log_message = lambda *_args, **_kwargs: None  # silence request logs
 
     try:
@@ -74,7 +79,7 @@ def start_viz_server(web_dir: str, port: int = 8080) -> HTTPServer | None:
 
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    logger.info("Live visualization: http://127.0.0.1:%d", port)
+    logger.info("Live visualization: http://127.0.0.1:%d/web/index.html", port)
     return server
 
 
@@ -130,7 +135,7 @@ def main():
     if not args.no_viz:
         viz_server = start_viz_server(web_dir, port=args.viz_port)
         if viz_server:
-            viz_url = f"http://127.0.0.1:{viz_server.server_address[1]}"
+            viz_url = f"http://127.0.0.1:{viz_server.server_address[1]}/web/index.html"
             webbrowser.open(viz_url)
 
     browser.start()
