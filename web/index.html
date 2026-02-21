@@ -6,7 +6,6 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta http-equiv="refresh" content="2">
     <title>QA Entomologist - Live Dashboard</title>
     <script src="vis-network.min.js"></script>
     <style>
@@ -671,11 +670,17 @@
         container.innerHTML = html;
     }
 
-    // ---- Refresh ----
-    async function refreshAll() {
-        try {
-            await Promise.all([loadGraph(), loadTestCases(), loadAlerts(), loadScreenshots()]);
-        } catch (e) { console.warn('refresh error:', e); }
+    // ---- Refresh (bulletproof loop using setTimeout) ----
+    function refreshAll() {
+        loadGraph().catch(()=>{});
+        loadTestCases().catch(()=>{});
+        loadAlerts().catch(()=>{});
+        loadScreenshots().catch(()=>{});
+    }
+
+    function tick() {
+        if (autoRefresh) refreshAll();
+        setTimeout(tick, 2000);
     }
 
     function toggleAutoRefresh() {
@@ -685,17 +690,15 @@
             btn.textContent = 'Live';
             btn.classList.add('active');
             document.querySelector('.pulse').style.display = 'inline-block';
-            refreshInterval = setInterval(refreshAll, 2000);
         } else {
             btn.textContent = 'Paused';
             btn.classList.remove('active');
             document.querySelector('.pulse').style.display = 'none';
-            clearInterval(refreshInterval);
         }
     }
 
     refreshAll();
-    refreshInterval = setInterval(refreshAll, 2000);
+    setTimeout(tick, 2000);
     </script>
 </body>
 </html>
