@@ -36,6 +36,7 @@ def run_auto_qa_workflow(
     lookback_minutes: int = 15,
     test_environment: str = "alpha",  # "alpha" or "production"
     code_repo_path: str | None = None,
+    base_url: str | None = None,
 ) -> dict[str, Any]:
     """
     Run the complete auto-QA workflow:
@@ -50,6 +51,7 @@ def run_auto_qa_workflow(
         lookback_minutes: How far back to look for anomalies
         test_environment: Environment to test in (alpha/production)
         code_repo_path: Path to code repository for analysis
+        base_url: Base URL for website testing (e.g., https://tubi.tv) - enables real browser testing with Playwright
     
     Returns:
         Complete QA report with detection, analysis, and test results
@@ -109,6 +111,7 @@ def run_auto_qa_workflow(
                     test_environment=test_environment,
                     service=service,
                     run_id=run_ctx.run_id,
+                    base_url=base_url,
                 )
                 results.append(result)
         
@@ -146,6 +149,7 @@ def _process_crash(
     test_environment: str,
     service: str,
     run_id: str,
+    base_url: str | None = None,
 ) -> dict[str, Any]:
     """Process a single crash through the full workflow."""
     
@@ -178,15 +182,26 @@ def _process_crash(
             f"Trigger action that causes: {crash.get('error_message', 'crash')}",
         ]
     
-    # Determine test method based on service type
-    if "web" in service.lower() or "http" in crash.get("description", "").lower():
+    # Determine test method: use browser testing if base_url is provided
+    if base_url:
+        # Use real browser testing with Playwright
+        logger.info(f"[{run_id}] Using browser automation to test: {base_url}")
         test_result = test_web_reproduction(
             crash_details=crash,
             reproduction_steps=reproduction_steps,
-            base_url=f"https://{test_environment}.example.com",  # Should be configurable
+            base_url=base_url,
+            environment=test_environment,
+        )
+    elif "web" in service.lower() or "http" in crash.get("description", "").lower():
+        # Fallback: use browser testing with default URL if service appears web-based
+        test_result = test_web_reproduction(
+            crash_details=crash,
+            reproduction_steps=reproduction_steps,
+            base_url=f"https://{test_environment}.example.com",
             environment=test_environment,
         )
     else:
+        # Use mock/API testing
         test_result = test_reproduction(
             crash_details=crash,
             reproduction_steps=reproduction_steps,

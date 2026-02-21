@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from agent.config import DD_API_KEY, DD_APP_KEY, DD_SITE, AGENT_ENV, KEY_SLIS
+from agent.config import DD_API_KEY, DD_APP_KEY, DD_SITE, DD_MOCK_SERVER, AGENT_ENV, KEY_SLIS
 from agent.observability import track_dd_query, logger
 
 
@@ -32,7 +32,11 @@ def detect_anomalies(
         - timestamp, description
         - affected_slis, error_details
     """
-    if AGENT_ENV == "demo" or not DD_API_KEY:
+    # Use mock server if configured, otherwise check for demo mode
+    if DD_MOCK_SERVER:
+        # Always use live mode when mock server is configured
+        return _detect_anomalies_live(service, lookback_minutes)
+    elif AGENT_ENV == "demo" or not DD_API_KEY:
         return _detect_anomalies_demo(service, lookback_minutes)
     
     return _detect_anomalies_live(service, lookback_minutes)
@@ -54,7 +58,10 @@ def fetch_crash_details(
         - user_count, frequency
         - affected_endpoints
     """
-    if AGENT_ENV == "demo" or not DD_API_KEY:
+    # Use mock server if configured
+    if DD_MOCK_SERVER:
+        return _fetch_crash_details_live(service, platform, lookback_minutes)
+    elif AGENT_ENV == "demo" or not DD_API_KEY:
         return _fetch_crash_details_demo(service, platform, lookback_minutes)
     
     return _fetch_crash_details_live(service, platform, lookback_minutes)
@@ -74,7 +81,10 @@ def fetch_recent_deployments(
         - commit_sha, author
         - environment (alpha/production)
     """
-    if AGENT_ENV == "demo" or not DD_API_KEY:
+    # Use mock server if configured
+    if DD_MOCK_SERVER:
+        return _fetch_deployments_live(service, lookback_hours)
+    elif AGENT_ENV == "demo" or not DD_API_KEY:
         return _fetch_deployments_demo(service, lookback_hours)
     
     return _fetch_deployments_live(service, lookback_hours)
@@ -88,7 +98,7 @@ def _detect_anomalies_live(
     service: str,
     lookback_minutes: int,
 ) -> list[dict[str, Any]]:
-    """Detect anomalies using Datadog API."""
+    """Detect anomalies using Datadog API (or mock server)."""
     try:
         from datadog_api_client import Configuration, ApiClient
         from datadog_api_client.v1.api.events_api import EventsApi
@@ -97,7 +107,16 @@ def _detect_anomalies_live(
         config = Configuration()
         config.api_key["apiKeyAuth"] = DD_API_KEY
         config.api_key["appKeyAuth"] = DD_APP_KEY
-        config.server_variables["site"] = DD_SITE
+        
+        # Use mock server if configured, otherwise use real Datadog
+        if DD_MOCK_SERVER:
+            # Extract host and port from mock server URL
+            from urllib.parse import urlparse
+            parsed = urlparse(DD_MOCK_SERVER)
+            config.host = f"{parsed.scheme}://{parsed.netloc}"
+            logger.info(f"Using mock Datadog server: {config.host}")
+        else:
+            config.server_variables["site"] = DD_SITE
         
         now = int(time.time())
         start = now - (lookback_minutes * 60)
@@ -203,7 +222,7 @@ def _fetch_crash_details_live(
     platform: str | None,
     lookback_minutes: int,
 ) -> list[dict[str, Any]]:
-    """Fetch detailed crash information from Datadog."""
+    """Fetch detailed crash information from Datadog (or mock server)."""
     try:
         from datadog_api_client import Configuration, ApiClient
         from datadog_api_client.v1.api.events_api import EventsApi
@@ -212,7 +231,14 @@ def _fetch_crash_details_live(
         config = Configuration()
         config.api_key["apiKeyAuth"] = DD_API_KEY
         config.api_key["appKeyAuth"] = DD_APP_KEY
-        config.server_variables["site"] = DD_SITE
+        
+        # Use mock server if configured
+        if DD_MOCK_SERVER:
+            from urllib.parse import urlparse
+            parsed = urlparse(DD_MOCK_SERVER)
+            config.host = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            config.server_variables["site"] = DD_SITE
         
         now = int(time.time())
         start = now - (lookback_minutes * 60)
@@ -263,7 +289,7 @@ def _fetch_deployments_live(
     service: str,
     lookback_hours: int,
 ) -> list[dict[str, Any]]:
-    """Fetch recent deployments from Datadog Events."""
+    """Fetch recent deployments from Datadog Events (or mock server)."""
     try:
         from datadog_api_client import Configuration, ApiClient
         from datadog_api_client.v1.api.events_api import EventsApi
@@ -271,7 +297,14 @@ def _fetch_deployments_live(
         config = Configuration()
         config.api_key["apiKeyAuth"] = DD_API_KEY
         config.api_key["appKeyAuth"] = DD_APP_KEY
-        config.server_variables["site"] = DD_SITE
+        
+        # Use mock server if configured
+        if DD_MOCK_SERVER:
+            from urllib.parse import urlparse
+            parsed = urlparse(DD_MOCK_SERVER)
+            config.host = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            config.server_variables["site"] = DD_SITE
         
         now = int(time.time())
         start = now - (lookback_hours * 3600)

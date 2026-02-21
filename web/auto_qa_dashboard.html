@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-QA Workflow Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .config {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .config-item {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .config-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .config-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+        
+        .workflow {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .step.active {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            animation: pulse 2s infinite;
+        }
+        
+        .step.completed {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+        
+        .step-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .step-details {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .results {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .crash-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: #fafafa;
+        }
+        
+        .crash-card.reproduced {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+        
+        .crash-card.not-reproduced {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px 5px 5px 0;
+        }
+        
+        .badge-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .badge-success {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .badge-warning {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .badge-info {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .environment-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #2196f3;
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Auto-QA Workflow Dashboard</h1>
+            <div class="environment-badge" id="envBadge">Environment: Alpha</div>
+            <div class="config" id="config">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="workflow">
+            <h2>🔄 Workflow Steps</h2>
+            <div id="workflowSteps">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="results">
+            <h2>📊 Results</h2>
+            <div class="summary-stats" id="summaryStats">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div id="crashResults">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Parse query parameters or use defaults
+        const params = new URLSearchParams(window.location.search);
+        const service = params.get('service') || 'playback-service';
+        const platform = params.get('platform') || 'ios';
+        const environment = params.get('environment') || 'alpha';
+        
+        // Update environment badge
+        document.getElementById('envBadge').textContent = `Environment: ${environment.toUpperCase()}`;
+        
+        // Configuration display
+        const config = {
+            service: service,
+            platform: platform,
+            environment: environment,
+            lookback: '15 minutes',
+            dataSource: 'Mock Datadog API (localhost:8080)'
+        };
+        
+        const configHtml = Object.entries(config).map(([key, value]) => `
+            <div class="config-item">
+                <div class="config-label">${key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                <div class="config-value">${value}</div>
+            </div>
+        `).join('');
+        document.getElementById('config').innerHTML = configHtml;
+        
+        // Workflow steps
+        const steps = [
+            { icon: '🔍', title: 'Step 1: Detect Anomalies', details: 'Querying Datadog for crashes and anomalies...', status: 'completed' },
+            { icon: '📝', title: 'Step 2: Analyze Code', details: 'Using AWS Bedrock to analyze code changes...', status: 'completed' },
+            { icon: '🧪', title: 'Step 3: Test Reproduction', details: `Testing in ${environment} environment...`, status: 'completed' },
+            { icon: '📊', title: 'Step 4: Generate Report', details: 'Creating QA report with recommendations...', status: 'completed' }
+        ];
+        
+        const stepsHtml = steps.map(step => `
+            <div class="step ${step.status}">
+                <div class="step-icon">${step.icon}</div>
+                <div class="step-content">
+                    <div class="step-title">${step.title}</div>
+                    <div class="step-details">${step.details}</div>
+                </div>
+            </div>
+        `).join('');
+        document.getElementById('workflowSteps').innerHTML = stepsHtml;
+        
+        // Summary stats (from your log)
+        const stats = {
+            anomalies: 1,
+            crashes: 1,
+            reproduced: 1,
+            riskScore: 80
+        };
+        
+        const statsHtml = `
+            <div class="stat-card">
+                <div class="stat-label">Anomalies Detected</div>
+                <div class="stat-value">${stats.anomalies}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Crashes Processed</div>
+                <div class="stat-value">${stats.crashes}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Reproduced</div>
+                <div class="stat-value">${stats.reproduced}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Risk Score</div>
+                <div class="stat-value">${stats.riskScore}/100</div>
+            </div>
+        `;
+        document.getElementById('summaryStats').innerHTML = statsHtml;
+        
+        // Crash results
+        const crashResult = {
+            id: 'demo_crash_001',
+            error: 'NullPointerException in playback buffer',
+            service: service,
+            platform: platform,
+            environment: environment,
+            reproduced: true,
+            confidence: 85,
+            recommendation: 'BLOCK_RELEASE',
+            testSteps: [
+                'Navigate to video playback page',
+                'Start playback with empty buffer',
+                'Crash reproduced: NullPointerException'
+            ]
+        };
+        
+        const crashHtml = `
+            <div class="crash-card ${crashResult.reproduced ? 'reproduced' : 'not-reproduced'}">
+                <h3>💥 Crash: ${crashResult.id}</h3>
+                <div style="margin: 10px 0;">
+                    <span class="badge badge-danger">${crashResult.error}</span>
+                    <span class="badge badge-info">${crashResult.service}</span>
+                    <span class="badge badge-info">${crashResult.platform}</span>
+                    <span class="badge badge-warning">${crashResult.environment}</span>
+                </div>
+                <div style="margin: 15px 0;">
+                    <strong>Reproduction Test:</strong>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        ${crashResult.testSteps.map(step => `<li>${step}</li>`).join('')}
+                    </ul>
+                </div>
+                <div style="margin: 15px 0;">
+                    <strong>Analysis:</strong>
+                    <p>Confidence: ${crashResult.confidence}% | Recommendation: <span class="badge badge-danger">${crashResult.recommendation}</span></p>
+                </div>
+            </div>
+        `;
+        document.getElementById('crashResults').innerHTML = crashHtml;
+        
+        // Auto-refresh every 5 seconds (if you want live updates)
+        // setInterval(() => location.reload(), 5000);
+    </script>
+</body>
+</html>
+
