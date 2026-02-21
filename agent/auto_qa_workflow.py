@@ -125,7 +125,7 @@ def run_auto_qa_workflow(
             evidence=[f"Processed {len(results)} crashes"],
         )
         
-        return {
+        report = {
             "run_id": run_ctx.run_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "status": "completed",
@@ -135,6 +135,17 @@ def run_auto_qa_workflow(
             "results": results,
             "summary": summary,
         }
+        
+        import json, os
+        web_report = os.path.join(os.path.dirname(os.path.dirname(__file__)), "web", "auto_qa_report.json")
+        try:
+            with open(web_report, "w") as f:
+                json.dump(report, f, indent=2, default=str)
+            logger.info(f"[{run_ctx.run_id}] Dashboard report written to {web_report}")
+        except Exception as e:
+            logger.warning(f"Could not write dashboard report: {e}")
+        
+        return report
     
     except Exception as e:
         logger.error(f"[{run_ctx.run_id}] Auto-QA workflow failed: {e}")

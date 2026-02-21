@@ -80,12 +80,21 @@ SAMPLE_DEPLOYMENTS = [
 ]
 
 
+SERVER_START_TIME = time.time()
+CRASH_DELAY_SECONDS = 0
+
+
 class MockDatadogHandler(BaseHTTPRequestHandler):
     """HTTP handler that mimics Datadog API endpoints."""
     
+    def _crashes_active(self):
+        return (time.time() - SERVER_START_TIME) >= CRASH_DELAY_SECONDS
+
     def log_request(self, code='-', size='-'):
         """Override to log requests for debugging."""
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] {self.command} {self.path} - {code}")
+        elapsed = int(time.time() - SERVER_START_TIME)
+        status = "CRASHES ACTIVE" if self._crashes_active() else f"waiting {CRASH_DELAY_SECONDS - elapsed}s"
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [{status}] {self.command} {self.path} - {code}")
     
     def do_GET(self):
         """Handle GET requests (Metrics API, Events API)."""
@@ -177,7 +186,10 @@ class MockDatadogHandler(BaseHTTPRequestHandler):
         start = int(query_params.get("from", [0])[0])
         end = int(query_params.get("to", [int(time.time())])[0])
         
-        # Parse query to extract metric name and tags
+        if not self._crashes_active():
+            self.send_json_response({"status": "ok", "res_type": "time_series", "series": [{"metric": "crash_rate", "pointlist": [[end * 1000, 0.001]], "start": start * 1000, "end": end * 1000, "interval": 60, "length": 1}]})
+            return
+
         if "crash_rate" in query:
             # Return crash rate data
             # Simulate: baseline 0.01 (1%), current spike to 0.05 (5%)
@@ -254,8 +266,10 @@ class MockDatadogHandler(BaseHTTPRequestHandler):
         
         events = []
         
-        # For demo: if no specific service tag, return all crashes
-        # If service tag provided, filter by it
+        if not self._crashes_active():
+            self.send_json_response({"events": [], "status": "ok"})
+            return
+
         service_filter = None
         if tags and "service:" in tags:
             service_filter = tags.split("service:")[1].split(",")[0].strip()
@@ -370,8 +384,12 @@ def run_server(port=8080):
     """Run the mock Datadog server."""
     server_address = ("", port)
     httpd = HTTPServer(server_address, MockDatadogHandler)
-    print(f"🚀 Mock Datadog API Server running on http://localhost:{port}")
-    print(f"   Use this URL in your .env: DD_MOCK_SERVER=http://localhost:{port}")
+    print(f"Mock Datadog API Server running on http://localhost:{port}")
+    if CRASH_DELAY_SECONDS > 0:
+        print(f"   Crash delay: {CRASH_DELAY_SECONDS}s (crashes will appear after delay)")
+    else:
+        print(f"   Crashes active immediately")
+    print(f"   DD_MOCK_SERVER=http://localhost:{port}")
     print(f"   Press Ctrl+C to stop\n")
     try:
         httpd.serve_forever()
@@ -384,6 +402,8 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Mock Datadog API Server")
     parser.add_argument("--port", type=int, default=8080, help="Port to run on (default: 8080)")
+    parser.add_argument("--delay", type=int, default=0, help="Seconds before crashes appear (simulates crash happening mid-demo)")
     args = parser.parse_args()
+    CRASH_DELAY_SECONDS = args.delay
     run_server(args.port)
 

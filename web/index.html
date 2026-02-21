@@ -244,6 +244,7 @@
         <div class="tabs">
             <button class="tab active" onclick="switchTab('graph', this)">Exploration Map</button>
             <button class="tab" onclick="switchTab('testcases', this)">Test Cases</button>
+            <button class="tab" onclick="switchTab('alerts', this)">Anomaly Alerts</button>
             <button class="tab" onclick="switchTab('screenshots', this)">Screenshots</button>
         </div>
         <div class="controls">
@@ -295,6 +296,20 @@
                             <div class="spinner"></div>
                             <p>Agent is exploring... test cases will appear here.</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anomaly Alerts Tab -->
+        <div class="tab-content" id="tab-alerts">
+            <div style="width:100%;height:100%;overflow-y:auto;padding:20px;">
+                <h2 style="margin-bottom:16px;">Anomaly Detection & Auto-QA <span id="alert-status" style="font-size:12px;font-weight:400;color:#888;margin-left:12px;">Waiting for anomalies...</span></h2>
+                <div id="alerts-content">
+                    <div class="tc-empty">
+                        <div class="spinner"></div>
+                        <p>Monitoring for production anomalies...</p>
+                        <p style="font-size:12px;color:#555;margin-top:8px;">Crashes will appear here when detected by Datadog</p>
                     </div>
                 </div>
             </div>
@@ -582,10 +597,80 @@
         }
     }
 
+    // ---- Anomaly Alerts ----
+    let lastAlertRunId = null;
+    async function loadAlerts() {
+        try {
+            const resp = await fetch('/web/auto_qa_report.json?t=' + Date.now());
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (!data.status || data.run_id === lastAlertRunId) return;
+            lastAlertRunId = data.run_id;
+            renderAlerts(data);
+        } catch (e) {}
+    }
+
+    function renderAlerts(data) {
+        const container = document.getElementById('alerts-content');
+        const statusEl = document.getElementById('alert-status');
+
+        if (data.status === 'no_anomalies') {
+            statusEl.innerHTML = '<span style="color:#22c55e;">No anomalies detected</span>';
+            container.innerHTML = '<div class="tc-empty"><p style="color:#22c55e;font-size:16px;">All clear — no production anomalies detected</p></div>';
+            return;
+        }
+
+        const s = data.summary || {};
+        const riskColor = s.overall_risk_score >= 70 ? '#ef4444' : s.overall_risk_score >= 40 ? '#f97316' : '#22c55e';
+        statusEl.innerHTML = `<span style="color:${riskColor};font-weight:700;">${data.anomalies_detected} anomalies | Risk: ${s.overall_risk_score}/100 | ${s.recommendation}</span>`;
+
+        let html = `
+            <div style="background:#1a1a2e;border:2px solid ${riskColor};border-radius:12px;padding:20px;margin-bottom:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div style="font-size:18px;font-weight:700;">Production Incident Detected</div>
+                    <div style="font-size:24px;font-weight:800;color:${riskColor};">${s.overall_risk_score}/100 RISK</div>
+                </div>
+                <div style="display:flex;gap:20px;margin-bottom:12px;">
+                    <div><span style="color:#888;">Service:</span> <strong>${data.service}</strong></div>
+                    <div><span style="color:#888;">Anomalies:</span> <strong style="color:#ef4444;">${data.anomalies_detected}</strong></div>
+                    <div><span style="color:#888;">Crashes:</span> <strong style="color:#f97316;">${data.crashes_processed}</strong></div>
+                    <div><span style="color:#888;">Recommendation:</span> <strong style="color:${riskColor};">${s.recommendation}</strong></div>
+                </div>
+                <div style="font-size:12px;color:#aaa;">${s.summary_message || ''}</div>
+            </div>`;
+
+        (data.results || []).forEach((r, i) => {
+            const ca = r.code_analysis || {};
+            const rt = r.reproduction_test || {};
+            const reproIcon = rt.reproduced ? '&#x2705;' : '&#x274C;';
+            const statusColor = r.status === 'processed' ? '#00d2ff' : '#f97316';
+
+            html += `
+                <div class="tc-card" style="border-left:3px solid ${statusColor};">
+                    <div class="tc-header">
+                        <span class="tc-id">${r.crash_id || 'CRASH-' + (i+1)}</span>
+                        <span class="tc-title">${ca.likely_cause || 'Crash Analysis'}</span>
+                        <span class="tc-priority ${r.severity === 'critical' ? 'p0' : r.severity === 'high' ? 'p1' : 'p2'}">${r.severity || 'medium'}</span>
+                    </div>
+                    <div style="display:flex;gap:20px;margin:10px 0;font-size:12px;">
+                        <div><span style="color:#888;">Reproducible:</span> ${reproIcon} ${ca.is_reproducible ? 'Yes' : 'No'} (${((ca.confidence || 0) * 100).toFixed(0)}% confidence)</div>
+                        <div><span style="color:#888;">Test Result:</span> ${rt.reproduced ? '<span style="color:#ef4444;">REPRODUCED</span>' : '<span style="color:#22c55e;">Not reproduced</span>'}</div>
+                        ${rt.test_duration_seconds ? `<div><span style="color:#888;">Duration:</span> ${rt.test_duration_seconds}s</div>` : ''}
+                    </div>
+                    ${ca.affected_files ? `<div style="font-size:11px;color:#888;margin:6px 0;">Affected: ${ca.affected_files.join(', ')}</div>` : ''}
+                    ${r.qa_recommendation ? `<div style="font-size:12px;background:#15152a;padding:10px;border-radius:6px;margin-top:8px;line-height:1.5;">${r.qa_recommendation}</div>` : ''}
+                </div>`;
+        });
+
+        html += `<div style="font-size:10px;color:#555;margin-top:12px;">Report ID: ${data.run_id} | ${data.timestamp}</div>`;
+        container.innerHTML = html;
+    }
+
     // ---- Refresh ----
     function refreshAll() {
         loadGraph();
         loadTestCases();
+        loadAlerts();
         loadScreenshots();
     }
 
