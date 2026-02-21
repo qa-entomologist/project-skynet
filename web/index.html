@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QA Entomologist - Live Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/vis-network.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/vis-network.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet">
+    <script src="vis-network.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -25,6 +23,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            height: 56px;
         }
 
         .header h1 {
@@ -38,64 +37,52 @@
         .header .subtitle { font-size: 11px; color: #888; margin-top: 2px; }
 
         .stats { display: flex; gap: 24px; }
-
         .stat { text-align: center; }
         .stat-value { font-size: 22px; font-weight: 700; color: #00d2ff; }
         .stat-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
 
         .tabs {
-            display: flex;
-            gap: 2px;
-            background: #111122;
-            border-radius: 8px;
-            padding: 3px;
+            display: flex; gap: 2px;
+            background: #111122; border-radius: 8px; padding: 3px;
         }
         .tab {
-            padding: 8px 18px;
-            border: none;
-            border-radius: 6px;
-            background: transparent;
-            color: #888;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s;
+            padding: 8px 18px; border: none; border-radius: 6px;
+            background: transparent; color: #888; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: all 0.2s;
         }
         .tab:hover { color: #ccc; background: #1a1a2e; }
         .tab.active { background: #00d2ff22; color: #00d2ff; }
 
         .controls { display: flex; gap: 8px; align-items: center; }
-
         .btn {
-            padding: 7px 14px;
-            border: 1px solid #3a3a5a;
-            border-radius: 6px;
-            background: #1a1a2e;
-            color: #e0e0e0;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
+            padding: 7px 14px; border: 1px solid #3a3a5a; border-radius: 6px;
+            background: #1a1a2e; color: #e0e0e0; cursor: pointer;
+            font-size: 12px; transition: all 0.2s;
         }
         .btn:hover { background: #2a2a4a; border-color: #00d2ff; }
         .btn.active { background: #00d2ff22; border-color: #00d2ff; color: #00d2ff; }
 
-        .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 1.5s infinite; margin-right: 6px; }
+        .pulse {
+            display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+            background: #22c55e; animation: pulse 1.5s infinite; margin-right: 6px;
+        }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         .main { height: calc(100vh - 56px); overflow: hidden; }
-
         .tab-content { display: none; height: 100%; }
         .tab-content.active { display: flex; }
 
-        /* ---- Graph Tab ---- */
-        #graph-container { flex: 1; background: #0a0a0f; }
+        /* Graph Tab */
+        #graph-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #0a0a0f;
+        }
 
         .sidebar {
-            width: 320px;
-            background: #111122;
-            border-left: 1px solid #2a2a4a;
-            overflow-y: auto;
-            padding: 16px;
+            width: 320px; background: #111122;
+            border-left: 1px solid #2a2a4a; overflow-y: auto; padding: 16px;
         }
         .sidebar h3 {
             font-size: 13px; color: #00d2ff; margin-bottom: 10px;
@@ -109,23 +96,26 @@
         .page-card:hover { border-color: #00d2ff; background: #1a1a3e; }
         .page-card.selected { border-color: #7b2ff7; background: #1a1a3e; }
         .page-card .title { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .page-card .url { font-size: 10px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .page-card .url { font-size: 10px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+        .page-card .obs { font-size: 10px; color: #888; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .page-card .meta { display: flex; gap: 6px; margin-top: 4px; }
         .page-card .badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #2a2a4a; color: #aaa; }
         .page-card .badge.depth { background: #7b2ff722; color: #7b2ff7; }
+        .page-card .badge.type { background: #00d2ff22; color: #00d2ff; }
 
         .legend { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #888; }
         .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
         .empty-state {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center;
-            justify-content: center; height: 100%; color: #555;
+            justify-content: center; color: #555; z-index: 5;
         }
         .empty-state p { margin-top: 12px; font-size: 14px; }
         .empty-state code { background: #1a1a2e; padding: 8px 16px; border-radius: 6px; margin-top: 12px; font-size: 13px; color: #00d2ff; }
 
-        /* ---- Test Cases Tab ---- */
+        /* Test Cases Tab */
         .test-cases-layout { display: flex; width: 100%; height: 100%; }
         .test-panel {
             flex: 1; overflow-y: auto; padding: 20px 24px;
@@ -152,10 +142,7 @@
         .tc-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
         .tc-id { font-size: 11px; font-weight: 700; color: #7b2ff7; font-family: monospace; }
         .tc-title { font-size: 14px; font-weight: 600; flex: 1; }
-        .tc-priority {
-            font-size: 10px; padding: 3px 8px; border-radius: 4px;
-            font-weight: 700; text-transform: uppercase;
-        }
+        .tc-priority { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
         .p0 { background: #ef444422; color: #ef4444; }
         .p1 { background: #f9731622; color: #f97316; }
         .p2 { background: #eab30822; color: #eab308; }
@@ -164,10 +151,7 @@
         .tc-type { font-size: 11px; color: #888; margin-bottom: 10px; }
 
         .tc-steps { list-style: none; }
-        .tc-step {
-            display: flex; gap: 10px; padding: 8px 0;
-            border-top: 1px solid #1e1e3a; font-size: 12px;
-        }
+        .tc-step { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid #1e1e3a; font-size: 12px; }
         .tc-step-num {
             min-width: 24px; height: 24px; border-radius: 50%;
             background: #2a2a4a; display: flex; align-items: center;
@@ -181,8 +165,7 @@
         .tc-step-screenshot { margin-top: 6px; }
         .tc-step-screenshot img {
             max-width: 200px; border-radius: 6px;
-            border: 1px solid #2a2a4a; cursor: pointer;
-            transition: transform 0.2s;
+            border: 1px solid #2a2a4a; cursor: pointer; transition: transform 0.2s;
         }
         .tc-step-screenshot img:hover { transform: scale(1.05); }
 
@@ -192,9 +175,7 @@
         }
         .tc-preconditions strong { color: #00d2ff; }
 
-        .tc-empty {
-            text-align: center; color: #555; padding: 60px 20px;
-        }
+        .tc-empty { text-align: center; color: #555; padding: 60px 20px; }
         .tc-empty .spinner {
             width: 40px; height: 40px; border: 3px solid #2a2a4a;
             border-top: 3px solid #00d2ff; border-radius: 50%;
@@ -202,11 +183,10 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ---- Screenshots Tab ---- */
+        /* Screenshots Tab */
         .screenshots-layout { width: 100%; height: 100%; overflow-y: auto; padding: 20px; }
         .screenshots-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
         }
         .ss-card {
             background: #1a1a2e; border: 1px solid #2a2a4a;
@@ -218,30 +198,11 @@
         .ss-card .ss-name { font-size: 11px; color: #aaa; word-break: break-all; }
         .ss-card .ss-time { font-size: 10px; color: #555; margin-top: 4px; }
 
-        /* ---- Activity Feed ---- */
-        .activity-panel {
-            width: 100%; height: 100%; overflow-y: auto; padding: 20px;
-        }
-        .activity-item {
-            display: flex; gap: 12px; padding: 10px 0;
-            border-bottom: 1px solid #1e1e3a;
-        }
-        .activity-icon {
-            width: 32px; height: 32px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; font-size: 14px;
-        }
-        .activity-icon.web { background: #00d2ff22; }
-        .activity-icon.mobile { background: #7b2ff722; }
-        .activity-text { flex: 1; font-size: 13px; }
-        .activity-time { font-size: 10px; color: #555; }
-
         /* Modal */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0;
             width: 100%; height: 100%; background: rgba(0,0,0,0.85);
-            z-index: 1000; align-items: center; justify-content: center;
-            cursor: pointer;
+            z-index: 1000; align-items: center; justify-content: center; cursor: pointer;
         }
         .modal-overlay.show { display: flex; }
         .modal-overlay img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
@@ -261,7 +222,7 @@
         <div class="stats">
             <div class="stat">
                 <div class="stat-value" id="stat-pages">0</div>
-                <div class="stat-label">Pages</div>
+                <div class="stat-label">Screens</div>
             </div>
             <div class="stat">
                 <div class="stat-value" id="stat-edges">0</div>
@@ -281,9 +242,9 @@
             </div>
         </div>
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('graph')">Exploration Map</button>
-            <button class="tab" onclick="switchTab('testcases')">Test Cases</button>
-            <button class="tab" onclick="switchTab('screenshots')">Screenshots</button>
+            <button class="tab active" onclick="switchTab('graph', this)">Exploration Map</button>
+            <button class="tab" onclick="switchTab('testcases', this)">Test Cases</button>
+            <button class="tab" onclick="switchTab('screenshots', this)">Screenshots</button>
         </div>
         <div class="controls">
             <span class="pulse"></span>
@@ -293,7 +254,6 @@
     </div>
 
     <div class="main">
-        <!-- Graph Tab -->
         <div class="tab-content active" id="tab-graph">
             <div id="graph-container">
                 <div class="empty-state" id="empty-state">
@@ -306,18 +266,17 @@
                 </div>
             </div>
             <div class="sidebar">
-                <h3>Discovered Pages</h3>
+                <h3>Discovered Screens</h3>
                 <div id="page-list"></div>
                 <div class="legend">
                     <div class="legend-item"><div class="legend-dot" style="background:#7b2ff7"></div> Home</div>
                     <div class="legend-item"><div class="legend-dot" style="background:#00d2ff"></div> Page</div>
-                    <div class="legend-item"><div class="legend-dot" style="background:#ff9f43"></div> SPA View</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#ff9f43"></div> SPA/Modal</div>
                     <div class="legend-item"><div class="legend-dot" style="background:#ff6b6b"></div> Deep</div>
                 </div>
             </div>
         </div>
 
-        <!-- Test Cases Tab -->
         <div class="tab-content" id="tab-testcases">
             <div class="test-cases-layout">
                 <div class="test-panel" id="web-tests">
@@ -341,7 +300,6 @@
             </div>
         </div>
 
-        <!-- Screenshots Tab -->
         <div class="tab-content" id="tab-screenshots">
             <div class="screenshots-layout">
                 <h2 style="margin-bottom:16px;">Captured Screenshots <span id="ss-count" style="color:#888;font-size:13px;font-weight:400;"></span></h2>
@@ -355,7 +313,6 @@
         </div>
     </div>
 
-    <!-- Image Modal -->
     <div class="modal-overlay" id="img-modal" onclick="this.classList.remove('show')">
         <img id="modal-img" src="" alt="Screenshot">
     </div>
@@ -364,21 +321,24 @@
     let network = null;
     let autoRefresh = true;
     let refreshInterval = null;
-    let lastWebTcCount = 0;
-    let lastMobileTcCount = 0;
+    let knownScreenshots = [];
 
-    function switchTab(tab) {
+    function switchTab(tab, btn) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        event.target.classList.add('active');
+        btn.classList.add('active');
         document.getElementById('tab-' + tab).classList.add('active');
-        if (tab === 'graph' && network) network.fit();
+        if (tab === 'graph' && network) {
+            setTimeout(() => { network.redraw(); network.fit(); }, 100);
+        }
     }
 
     function showImage(src) {
         document.getElementById('modal-img').src = src;
         document.getElementById('img-modal').classList.add('show');
     }
+
+    function truncate(str, len) { return !str ? '' : str.length > len ? str.substring(0, len) + '...' : str; }
 
     // ---- Graph ----
     function nodeColor(node) {
@@ -388,11 +348,10 @@
         return { background: '#00d2ff', border: '#33ddff', highlight: { background: '#33ddff', border: '#66eeff' } };
     }
     function edgeColor(edge) {
-        if (edge.action_type === 'back') return { color: '#ff6b6b44', highlight: '#ff6b6b' };
-        if (edge.action_type === 'spa_click') return { color: '#ff9f4344', highlight: '#ff9f43' };
-        return { color: '#00d2ff44', highlight: '#00d2ff' };
+        if (edge.action_type === 'back') return { color: '#ff6b6b66', highlight: '#ff6b6b' };
+        if (edge.action_type === 'spa_click') return { color: '#ff9f4366', highlight: '#ff9f43' };
+        return { color: '#00d2ff66', highlight: '#00d2ff' };
     }
-    function truncate(str, len) { return !str ? '' : str.length > len ? str.substring(0, len) + '...' : str; }
 
     async function loadGraph() {
         try {
@@ -400,46 +359,69 @@
             if (!resp.ok) return;
             const data = await resp.json();
             renderGraph(data);
-        } catch (e) {}
+        } catch (e) {
+            console.log('Graph not ready:', e);
+        }
     }
 
     function renderGraph(data) {
         if (!data.nodes || data.nodes.length === 0) return;
+
         document.getElementById('empty-state').style.display = 'none';
         document.getElementById('stat-pages').textContent = data.nodes.length;
         document.getElementById('stat-edges').textContent = data.edges.length;
 
+        const nodeIds = new Set(data.nodes.map(n => n.id));
+
         const nodes = new vis.DataSet(data.nodes.map(n => ({
-            id: n.id, label: truncate(n.title || n.path || n.url, 25),
-            title: `${n.title}\n${n.url}\nDepth: ${n.depth}`,
+            id: n.id,
+            label: truncate(n.title || n.path || n.url, 25),
+            title: `${n.title || 'Unknown'}\n${n.url}\nDepth: ${n.depth}\nType: ${n.page_type || 'unknown'}`,
             color: nodeColor(n),
-            font: { color: '#e0e0e0', size: 11 },
+            font: { color: '#e0e0e0', size: 12 },
             shape: n.depth === 0 ? 'diamond' : 'dot',
-            size: n.depth === 0 ? 20 : Math.max(8, 16 - n.depth * 2),
+            size: n.depth === 0 ? 25 : Math.max(10, 18 - n.depth * 3),
         })));
 
-        const edges = new vis.DataSet(data.edges.map((e, i) => ({
-            id: 'e' + i, from: e.from_id, to: e.to_id,
+        const validEdges = data.edges.filter(e => nodeIds.has(e.from_id) && nodeIds.has(e.to_id));
+        const edges = new vis.DataSet(validEdges.map((e, i) => ({
+            id: 'e' + i,
+            from: e.from_id,
+            to: e.to_id,
             label: truncate(e.element_text, 18),
             color: edgeColor(e),
-            arrows: { to: { enabled: true, scaleFactor: 0.5 } },
-            font: { color: '#666', size: 9, strokeWidth: 0 },
+            arrows: { to: { enabled: true, scaleFactor: 0.6 } },
+            font: { color: '#888', size: 10, strokeWidth: 0 },
             smooth: { type: 'curvedCW', roundness: 0.2 },
             dashes: e.action_type === 'back',
+            width: e.action_type === 'back' ? 1 : 2,
         })));
+
+        const container = document.getElementById('graph-container');
 
         if (network) {
             network.setData({ nodes, edges });
         } else {
-            network = new vis.Network(document.getElementById('graph-container'), { nodes, edges }, {
+            network = new vis.Network(container, { nodes, edges }, {
                 physics: {
-                    forceAtlas2Based: { gravitationalConstant: -40, centralGravity: 0.005, springLength: 150, springConstant: 0.08 },
-                    solver: 'forceAtlas2Based', stabilization: { iterations: 150 },
+                    forceAtlas2Based: {
+                        gravitationalConstant: -60,
+                        centralGravity: 0.01,
+                        springLength: 180,
+                        springConstant: 0.06,
+                        damping: 0.4,
+                    },
+                    solver: 'forceAtlas2Based',
+                    stabilization: { iterations: 200 },
                 },
                 interaction: { hover: true, tooltipDelay: 200 },
-                edges: { width: 1.5 },
+                edges: { width: 2 },
+                nodes: { borderWidth: 2 },
             });
-            network.on('click', params => { if (params.nodes.length > 0) highlightPageCard(params.nodes[0]); });
+            network.on('click', params => {
+                if (params.nodes.length > 0) highlightPageCard(params.nodes[0]);
+            });
+            network.once('stabilized', () => network.fit({ animation: true }));
         }
         renderPageList(data.nodes);
     }
@@ -451,8 +433,20 @@
             const card = document.createElement('div');
             card.className = 'page-card';
             card.dataset.id = p.id;
-            card.innerHTML = `<div class="title">${p.title || '(untitled)'}</div><div class="url">${p.url}</div><div class="meta"><span class="badge depth">depth ${p.depth}</span><span class="badge">${p.element_count || 0} elements</span></div>`;
-            card.onclick = () => { if (network) { network.selectNodes([p.id]); network.focus(p.id, { scale: 1.2, animation: true }); } highlightPageCard(p.id); };
+            const obsText = p.observations ? truncate(p.observations, 80) : '';
+            card.innerHTML = `
+                <div class="title">${p.title || '(untitled)'}</div>
+                <div class="url">${p.url}</div>
+                ${obsText ? `<div class="obs">${obsText}</div>` : ''}
+                <div class="meta">
+                    <span class="badge depth">depth ${p.depth}</span>
+                    <span class="badge type">${p.page_type || 'unknown'}</span>
+                    <span class="badge">${p.element_count || 0} elements</span>
+                </div>`;
+            card.onclick = () => {
+                if (network) { network.selectNodes([p.id]); network.focus(p.id, { scale: 1.5, animation: true }); }
+                highlightPageCard(p.id);
+            };
             list.appendChild(card);
         });
     }
@@ -509,6 +503,7 @@
             }
 
             const precond = tc.custom_preconds ? `<div class="tc-preconditions"><strong>Preconditions:</strong> ${tc.custom_preconds}</div>` : '';
+            const typeLabel = tc.type_id === 1 ? 'Functional' : tc.type_id === 6 ? 'Accessibility' : tc.type_id === 7 ? 'Responsive' : 'Other';
 
             container.innerHTML += `
                 <div class="tc-card">
@@ -517,7 +512,7 @@
                         <span class="tc-title">${tc.title}</span>
                         <span class="tc-priority ${prioClass}">${prioLabel}</span>
                     </div>
-                    <div class="tc-type">${tc.type_id === 1 ? 'Functional' : tc.type_id === 6 ? 'Accessibility' : tc.type_id === 7 ? 'Responsive' : 'Other'}</div>
+                    <div class="tc-type">${typeLabel}</div>
                     ${precond}
                     <ul class="tc-steps">${stepsHtml}</ul>
                 </div>`;
@@ -527,39 +522,64 @@
     // ---- Screenshots ----
     async function loadScreenshots() {
         try {
-            const resp = await fetch('/screenshots/?t=' + Date.now());
-            if (!resp.ok) return;
-            const text = await resp.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(text, 'text/html');
-            const links = [...doc.querySelectorAll('a')].map(a => a.getAttribute('href')).filter(h => h && (h.endsWith('.png') || h.endsWith('.jpg') || h.endsWith('.jpeg')));
+            const allImages = [];
 
-            if (links.length === 0) return;
+            const topResp = await fetch('/screenshots/?t=' + Date.now());
+            if (!topResp.ok) return;
+            const topText = await topResp.text();
+            const topDoc = new DOMParser().parseFromString(topText, 'text/html');
+            const topLinks = [...topDoc.querySelectorAll('a')].map(a => a.getAttribute('href')).filter(Boolean);
 
-            document.getElementById('stat-screenshots').textContent = links.length;
-            document.getElementById('ss-count').textContent = `(${links.length} captured)`;
+            topLinks.forEach(link => {
+                if (link.match(/\.(png|jpg|jpeg)$/i)) {
+                    allImages.push({ path: '/screenshots/' + link, name: link });
+                }
+            });
+
+            const subdirs = topLinks.filter(l => l.endsWith('/') && l !== '../');
+            for (const dir of subdirs) {
+                try {
+                    const subResp = await fetch('/screenshots/' + dir + '?t=' + Date.now());
+                    if (!subResp.ok) continue;
+                    const subText = await subResp.text();
+                    const subDoc = new DOMParser().parseFromString(subText, 'text/html');
+                    [...subDoc.querySelectorAll('a')].forEach(a => {
+                        const href = a.getAttribute('href');
+                        if (href && href.match(/\.(png|jpg|jpeg)$/i)) {
+                            allImages.push({ path: '/screenshots/' + dir + href, name: dir + href });
+                        }
+                    });
+                } catch (e) {}
+            }
+
+            if (allImages.length === 0) return;
+            if (allImages.length === knownScreenshots.length) return;
+            knownScreenshots = allImages;
+
+            document.getElementById('stat-screenshots').textContent = allImages.length;
+            document.getElementById('ss-count').textContent = `(${allImages.length} captured)`;
 
             const grid = document.getElementById('ss-grid');
-            const existing = grid.querySelectorAll('.ss-card').length;
-            if (links.length === existing) return;
-
             grid.innerHTML = '';
-            links.reverse().forEach(link => {
-                const name = link.replace('screenshots/', '');
-                const parts = name.replace('.png', '').split('_');
+
+            allImages.reverse().forEach(img => {
+                const name = img.name.replace(/\//g, ' / ');
+                const parts = img.name.replace('.png', '').split(/[_/]/);
                 const ts = parts[parts.length - 1];
-                const label = parts.slice(0, -1).join('_');
+                const label = parts.filter(p => !p.match(/^\d{10,}$/)).join(' ');
 
                 grid.innerHTML += `
                     <div class="ss-card">
-                        <img src="/screenshots/${link}" loading="lazy" onclick="showImage(this.src)" alt="${name}" onerror="this.parentElement.style.display='none'">
+                        <img src="${img.path}" loading="lazy" onclick="showImage(this.src)" alt="${name}" onerror="this.parentElement.style.display='none'">
                         <div class="ss-info">
                             <div class="ss-name">${label || name}</div>
-                            <div class="ss-time">${ts ? new Date(parseInt(ts) * 1000 || Date.now()).toLocaleTimeString() : ''}</div>
+                            <div class="ss-time">${ts && ts.match(/^\d{10}/) ? new Date(parseInt(ts) * 1000).toLocaleTimeString() : ''}</div>
                         </div>
                     </div>`;
             });
-        } catch (e) {}
+        } catch (e) {
+            console.log('Screenshots error:', e);
+        }
     }
 
     // ---- Refresh ----
