@@ -82,6 +82,7 @@ class AutoQARequest(BaseModel):
     lookback_minutes: int = Field(15, description="How far back to look for anomalies")
     test_environment: str = Field("alpha", description="Environment to test in (alpha/production)")
     code_repo_path: str | None = Field(None, description="Path to code repository for analysis")
+    base_url: str | None = Field(None, description="Base URL for website testing (e.g., https://tubi.tv) - enables real browser testing")
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -209,6 +210,7 @@ async def run_auto_qa(req: AutoQARequest):
             lookback_minutes=req.lookback_minutes,
             test_environment=req.test_environment,
             code_repo_path=req.code_repo_path,
+            base_url=req.base_url,
         )
         return result
     except Exception as e:

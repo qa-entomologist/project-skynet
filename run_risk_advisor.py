@@ -100,6 +100,7 @@ def run_auto_qa(args):
     print(f"   Environment:    {args.test_environment}")
     print(f"   Lookback:       {args.lookback_minutes} minutes")
     print(f"   Code Repo:      {args.code_repo_path or 'Not specified'}")
+    print(f"   Base URL:       {args.base_url or 'Not specified (will use mock testing)'}")
     print()
     
     result = run_auto_qa_workflow(
@@ -108,6 +109,7 @@ def run_auto_qa(args):
         lookback_minutes=args.lookback_minutes,
         test_environment=args.test_environment,
         code_repo_path=args.code_repo_path,
+        base_url=args.base_url,
     )
     
     # Pretty print results with visual indicators
@@ -192,6 +194,7 @@ def main():
     parser.add_argument("--lookback-minutes", type=int, default=15, help="Lookback window for anomalies (minutes)")
     parser.add_argument("--test-environment", default="alpha", help="Test environment (alpha/production)")
     parser.add_argument("--code-repo-path", default=None, help="Path to code repository for analysis")
+    parser.add_argument("--base-url", default=None, help="Base URL for website testing (e.g., https://tubi.tv) - enables real browser testing")
 
     args = parser.parse_args()
 

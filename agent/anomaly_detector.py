@@ -32,7 +32,11 @@ def detect_anomalies(
         - timestamp, description
         - affected_slis, error_details
     """
-    if AGENT_ENV == "demo" or not DD_API_KEY:
+    # Use mock server if configured, otherwise check for demo mode
+    if DD_MOCK_SERVER:
+        # Always use live mode when mock server is configured
+        return _detect_anomalies_live(service, lookback_minutes)
+    elif AGENT_ENV == "demo" or not DD_API_KEY:
         return _detect_anomalies_demo(service, lookback_minutes)
     
     return _detect_anomalies_live(service, lookback_minutes)
@@ -54,7 +58,10 @@ def fetch_crash_details(
         - user_count, frequency
         - affected_endpoints
     """
-    if AGENT_ENV == "demo" or not DD_API_KEY:
+    # Use mock server if configured
+    if DD_MOCK_SERVER:
+        return _fetch_crash_details_live(service, platform, lookback_minutes)
+    elif AGENT_ENV == "demo" or not DD_API_KEY:
         return _fetch_crash_details_demo(service, platform, lookback_minutes)
     
     return _fetch_crash_details_live(service, platform, lookback_minutes)
@@ -74,7 +81,10 @@ def fetch_recent_deployments(
         - commit_sha, author
         - environment (alpha/production)
     """
-    if AGENT_ENV == "demo" or not DD_API_KEY:
+    # Use mock server if configured
+    if DD_MOCK_SERVER:
+        return _fetch_deployments_live(service, lookback_hours)
+    elif AGENT_ENV == "demo" or not DD_API_KEY:
         return _fetch_deployments_demo(service, lookback_hours)
     
     return _fetch_deployments_live(service, lookback_hours)
