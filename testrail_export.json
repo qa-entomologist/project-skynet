@@ -1,253 +1,268 @@
 {
   "format": "testrail",
   "version": "1.0",
-  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135",
+  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174735",
   "test_cases": [
     {
-      "title": "Homepage Content Display and Navigation",
+      "title": "Browse and Play Content",
       "custom_id": "TC-001",
       "priority_id": 1,
-      "type_id": 1,
-      "custom_preconds": "Clean browser state, no authentication",
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi homepage",
       "custom_steps_separated": [
         {
-          "content": "Navigate to tubitv.com",
-          "expected": "Homepage loads with header navigation, featured content, and content rows",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/homepage.png"
-        },
-        {
-          "content": "Verify header items",
-          "expected": "Shows: Browse, Movies, TV Shows, Live TV, Espa\u00f1ol, Kids mode, Sign In"
+          "content": "Navigate to homepage",
+          "expected": "Homepage loads with featured content and navigation"
         },
         {
           "content": "Scroll through content rows",
-          "expected": "Content rows load smoothly, thumbnails visible"
+          "expected": "Content loads smoothly, thumbnails visible"
         },
         {
-          "content": "Hover over content items",
-          "expected": "Play button appears, title info shown"
-        }
-      ],
-      "custom_automation_type": 0
-    },
-    {
-      "title": "Movie Detail Page and Playback",
-      "custom_id": "TC-002",
-      "priority_id": 1,
-      "type_id": 2,
-      "custom_preconds": "On homepage with content loaded",
-      "custom_steps_separated": [
-        {
-          "content": "Click any movie thumbnail",
-          "expected": "Movie detail page opens",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/movie_detail.png"
+          "content": "Hover over content thumbnail",
+          "expected": "\"Watch Free\" button appears"
         },
         {
-          "content": "Verify movie information",
-          "expected": "Shows title, year, rating, duration, description"
+          "content": "Click \"Watch Free\" on any content",
+          "expected": "Video player opens and content begins playing"
         },
         {
-          "content": "Click Play button",
-          "expected": "Video player launches",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/player.png"
-        },
-        {
-          "content": "Verify player controls",
-          "expected": "Play/pause, timeline, volume controls functional"
+          "content": "Check player controls",
+          "expected": "Play/pause, volume, subtitles, and fullscreen controls work"
         }
       ],
       "custom_automation_type": 0
     },
     {
       "title": "Search Functionality",
-      "custom_id": "TC-003",
+      "custom_id": "TC-002",
       "priority_id": 2,
       "type_id": 2,
-      "custom_preconds": "On any page with search bar",
+      "custom_preconds": "User is on any page with search bar",
       "custom_steps_separated": [
         {
-          "content": "Enter valid movie title \"Shrek\"",
-          "expected": "Search results show relevant matches",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/search_results.png"
+          "content": "Enter valid search term (e.g. \"action movies\")",
+          "expected": "Results display matching content"
         },
         {
-          "content": "Click search result",
-          "expected": "Navigates to correct content detail page"
+          "content": "Enter gibberish search term",
+          "expected": "\"No results found\" message appears with recommendations"
         },
         {
-          "content": "Search \"xyzabc123notamovie\"",
-          "expected": "Shows \"No results found\" message",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/no_results.png"
-        },
-        {
-          "content": "Verify search suggestions",
-          "expected": "Shows trending/popular content alternatives"
+          "content": "Clear search",
+          "expected": "Returns to previous view"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "Kids Mode Toggle",
+      "title": "Navigation Menu",
+      "custom_id": "TC-003",
+      "priority_id": 2,
+      "type_id": 4,
+      "custom_preconds": "User is on homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Click \"Movies\"",
+          "expected": "Movies page loads with categorized content"
+        },
+        {
+          "content": "Click \"TV Shows\"",
+          "expected": "TV Shows page loads with series content"
+        },
+        {
+          "content": "Click \"Live TV\"",
+          "expected": "Live TV guide loads with streaming channels"
+        },
+        {
+          "content": "Test header persistence",
+          "expected": "Header remains consistent across sections"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Kids Mode",
       "custom_id": "TC-004",
       "priority_id": 2,
       "type_id": 2,
-      "custom_preconds": "On regular mode homepage",
+      "custom_preconds": "User is on homepage",
       "custom_steps_separated": [
         {
-          "content": "Click \"Tubi Kids\" button",
-          "expected": "Switches to kids interface",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/kids_mode.png"
+          "content": "Click \"Tubi Kids\"",
+          "expected": "Switches to kids interface"
         },
         {
           "content": "Verify content filtering",
-          "expected": "Only family-friendly content shown"
+          "expected": "Only kid-appropriate content shown"
         },
         {
-          "content": "Verify UI changes",
-          "expected": "Different color scheme, simplified navigation"
+          "content": "Check navigation options",
+          "expected": "Limited to kid-safe sections"
         },
         {
           "content": "Click \"Exit Kids\"",
-          "expected": "Returns to regular mode"
+          "expected": "Returns to main interface"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "Authentication Flows",
+      "title": "Live TV Guide",
       "custom_id": "TC-005",
       "priority_id": 2,
       "type_id": 2,
-      "custom_preconds": "Not logged in",
+      "custom_preconds": "User is on homepage",
       "custom_steps_separated": [
         {
-          "content": "Click Sign In",
-          "expected": "Login form appears",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/login.png"
+          "content": "Navigate to Live TV",
+          "expected": "Channel guide loads"
         },
         {
-          "content": "Verify login options",
-          "expected": "Email/password, social logins available"
+          "content": "Check program information",
+          "expected": "Current and upcoming shows displayed"
         },
         {
-          "content": "Click Register",
-          "expected": "Registration form appears",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/register.png"
+          "content": "Select a channel",
+          "expected": "Live stream begins playing"
         },
         {
-          "content": "Verify form fields",
-          "expected": "All required fields present with validation"
+          "content": "Verify player controls",
+          "expected": "Volume, fullscreen, and PIP controls work"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "Mobile Responsive Design",
+      "title": "Authentication Flow",
       "custom_id": "TC-006",
-      "priority_id": 3,
+      "priority_id": 2,
       "type_id": 2,
-      "custom_preconds": "Mobile viewport (375x812)",
+      "custom_preconds": "User is on homepage",
       "custom_steps_separated": [
         {
-          "content": "View on mobile",
-          "expected": "Layout adjusts for mobile",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/mobile.png"
+          "content": "Click \"Sign In\"",
+          "expected": "Login form appears"
         },
         {
-          "content": "Verify navigation",
-          "expected": "Menu collapses to hamburger"
+          "content": "Check form fields",
+          "expected": "Email and password fields present"
         },
         {
-          "content": "Verify content grid",
-          "expected": "Single column layout"
+          "content": "Check social login options",
+          "expected": "Alternative login methods available"
         },
         {
-          "content": "Test touch interactions",
-          "expected": "Buttons/controls properly sized"
-        }
-      ],
-      "custom_automation_type": 0
-    },
-    {
-      "title": "Legal/Support Pages",
-      "custom_id": "TC-007",
-      "priority_id": 3,
-      "type_id": 4,
-      "custom_preconds": "On any page with footer",
-      "custom_steps_separated": [
-        {
-          "content": "Access Terms of Use",
-          "expected": "Terms page loads with sections",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/terms.png"
+          "content": "Click \"Register\"",
+          "expected": "Registration form appears"
         },
         {
-          "content": "Access Privacy Policy",
-          "expected": "Privacy policy loads",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/privacy.png"
-        },
-        {
-          "content": "Access Support",
-          "expected": "Help center/contact form loads",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/support.png"
-        },
-        {
-          "content": "Verify navigation",
-          "expected": "All legal/support links functional"
+          "content": "Verify form requirements",
+          "expected": "All required fields marked"
         }
       ],
       "custom_automation_type": 0
     },
     {
       "title": "Content Categories",
-      "custom_id": "TC-008",
+      "custom_id": "TC-007",
       "priority_id": 2,
       "type_id": 4,
-      "custom_preconds": "On homepage",
+      "custom_preconds": "User is on homepage",
       "custom_steps_separated": [
         {
-          "content": "Click Movies",
-          "expected": "Shows movie categories/filters",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/movies.png"
+          "content": "Click Browse menu",
+          "expected": "Category options appear"
         },
         {
-          "content": "Click TV Shows",
-          "expected": "Shows TV categories/filters",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/tv.png"
+          "content": "Select a category",
+          "expected": "Filtered content loads"
         },
         {
-          "content": "Click Live TV",
-          "expected": "Shows available live channels",
-          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_174135/live.png"
+          "content": "Check sorting options",
+          "expected": "Can sort by relevant criteria"
         },
         {
-          "content": "Test category filters",
-          "expected": "Content updates per selection"
+          "content": "Verify breadcrumb",
+          "expected": "Navigation path shown"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "Page Health Check",
+      "title": "Mobile Responsive Design",
+      "custom_id": "TC-008",
+      "priority_id": 3,
+      "type_id": 2,
+      "custom_preconds": "Mobile browser or device emulation enabled",
+      "custom_steps_separated": [
+        {
+          "content": "View at 375x812",
+          "expected": "Layout adapts to mobile width"
+        },
+        {
+          "content": "Check navigation",
+          "expected": "Menu collapses to hamburger"
+        },
+        {
+          "content": "Test touch interactions",
+          "expected": "Elements properly sized for touch"
+        },
+        {
+          "content": "Verify content flow",
+          "expected": "Content stacks appropriately"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Accessibility Compliance",
       "custom_id": "TC-009",
       "priority_id": 3,
       "type_id": 2,
-      "custom_preconds": "Access to browser console",
+      "custom_preconds": "User is on homepage",
       "custom_steps_separated": [
         {
-          "content": "Check homepage health",
-          "expected": "No broken images/links"
+          "content": "Check page structure",
+          "expected": "Proper heading hierarchy"
         },
         {
-          "content": "Verify alt text",
-          "expected": "Images have descriptive alt text"
-        },
-        {
-          "content": "Check form labels",
+          "content": "Verify form labels",
           "expected": "All inputs properly labeled"
         },
         {
-          "content": "Monitor console",
-          "expected": "No JavaScript errors"
+          "content": "Test keyboard navigation",
+          "expected": "Can navigate via keyboard"
+        },
+        {
+          "content": "Check alt text",
+          "expected": "Images have descriptive alt text"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Content Detail Pages",
+      "custom_id": "TC-010",
+      "priority_id": 1,
+      "type_id": 2,
+      "custom_preconds": "User is on homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Click content thumbnail",
+          "expected": "Detail page loads"
+        },
+        {
+          "content": "Check content info",
+          "expected": "Title, description, rating displayed"
+        },
+        {
+          "content": "Verify metadata",
+          "expected": "Year, duration, genre shown"
+        },
+        {
+          "content": "Check related content",
+          "expected": "Similar titles recommended"
         }
       ],
       "custom_automation_type": 0
