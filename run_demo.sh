@@ -59,8 +59,6 @@ python3 mock_datadog_server.py --port $MOCK_DD_PORT --delay $CRASH_DELAY > /dev/
 MOCK_PID=$!
 
 sleep 1
-open "http://localhost:$DASHBOARD_PORT/web/index.html"
-open "http://localhost:$DASHBOARD_PORT/web/datadog_monitor.html"
 
 # 3. Start auto-QA poller in background (polls every 10s, picks up crash after delay)
 echo "[3/4] Starting anomaly monitor (will detect crash after ${CRASH_DELAY}s)..."
@@ -73,10 +71,19 @@ echo "[3/4] Starting anomaly monitor (will detect crash after ${CRASH_DELAY}s)..
 ) &
 QA_PID=$!
 
-# 4. Run web agent (foreground — visible browser)
+# 4. Run web agent (foreground — visible browser) + open all dashboards together
 echo "[4/4] Launching web agent on $TARGET_URL (headed browser)..."
 echo ""
 export HEADLESS=false
+
+# Open all 3 windows at the same time (agent browser + both dashboards)
+(
+    sleep 3
+    open "http://localhost:$DASHBOARD_PORT/web/index.html"
+    open "http://localhost:$DASHBOARD_PORT/web/index.html#tab=testcases"
+    open "http://localhost:$DASHBOARD_PORT/web/datadog_monitor.html"
+) &
+
 python3 run.py "$TARGET_URL" --headed --viz-port $((DASHBOARD_PORT + 1)) --no-viz
 
 echo ""

@@ -697,8 +697,32 @@
         }
     }
 
+    // Auto-switch tab if URL hash says so
+    if (window.location.hash === '#tab=testcases') {
+        var tcBtn = document.querySelectorAll('.tab')[1];
+        if (tcBtn) switchTab('tc', tcBtn);
+    }
+
     refreshAll();
     setTimeout(tick, 2000);
+
+    // Bulletproof fallback: force reload graph+stats every 2s no matter what
+    (function forceLoop() {
+        var x = new XMLHttpRequest();
+        x.open('GET', '/web/graph_data.json?_=' + Math.random(), true);
+        x.onload = function() {
+            try {
+                var d = JSON.parse(x.responseText);
+                if (d.nodes) {
+                    document.getElementById('stat-pages').textContent = d.nodes.length;
+                    document.getElementById('stat-edges').textContent = d.edges.length;
+                    renderGraph(d);
+                }
+            } catch(e) {}
+        };
+        x.send();
+        setTimeout(forceLoop, 2000);
+    })();
     </script>
 </body>
 </html>

@@ -1,0 +1,102 @@
+{
+  "test_cases": [
+    {
+      "id": "TC-001",
+      "title": "Watch Free Movies and TV Shows Online | Tubi \u2014 Search Results",
+      "priority": "P1",
+      "type": "Functional",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Navigate to https://tubitv.com/",
+          "expected": "Watch Free Movies and TV Shows Online | Tubi loads successfully"
+        },
+        {
+          "step": 2,
+          "action": "Inspect page content",
+          "expected": "Search results page for \"scooby doo\" shows relevant matches. Results filtered for kids content since Kids mode is active. Shows thumbnails of Scooby-Doo series and movies with titles and metadata. Eac"
+        },
+        {
+          "step": 3,
+          "action": "Verify interactive elements",
+          "expected": "60 interactive elements present and functional"
+        }
+      ],
+      "screenshot": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_180133/step_019_search_results.png"
+    },
+    {
+      "id": "TC-002",
+      "title": "Watch Free Movies Online | Tubi TV \u2014 Search Results",
+      "priority": "P1",
+      "type": "Functional",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Navigate to https://tubitv.com/movies",
+          "expected": "Watch Free Movies Online | Tubi TV loads successfully"
+        },
+        {
+          "step": 2,
+          "action": "Inspect page content",
+          "expected": "Search results page shows matching content for \"Shrek\". Results include movie thumbnails with titles, years, and ratings. Search bar remains at top with query term. Results appear to be sorted by rele"
+        },
+        {
+          "step": 3,
+          "action": "Verify interactive elements",
+          "expected": "60 interactive elements present and functional"
+        }
+      ],
+      "screenshot": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_180133/step_008_search_results.png"
+    },
+    {
+      "id": "TC-003",
+      "title": "Watch Free TV Shows Online | Tubi TV \u2014 Category",
+      "priority": "P1",
+      "type": "Navigation",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Navigate to https://tubitv.com/tv-shows",
+          "expected": "Watch Free TV Shows Online | Tubi TV loads successfully"
+        },
+        {
+          "step": 2,
+          "action": "Inspect page content",
+          "expected": "TV Shows landing page organized similarly to Movies but with series-specific categories. Shows horizontal rows of TV series with thumbnails, titles, and season/episode counts. Categories include: Popu"
+        },
+        {
+          "step": 3,
+          "action": "Verify interactive elements",
+          "expected": "60 interactive elements present and functional"
+        }
+      ],
+      "screenshot": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_180133/step_011_category.png"
+    },
+    {
+      "id": "TC-004",
+      "title": "Watch Free Live TV, Movies and TV Shows Online | Tubi \u2014 Live Tv",
+      "priority": "P2",
+      "type": "Smoke",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Navigate to https://tubitv.com/live",
+          "expected": "Watch Free Live TV, Movies and TV Shows Online | Tubi loads successfully"
+        },
+        {
+          "step": 2,
+          "action": "Inspect page content",
+          "expected": "Live TV page shows grid of live streaming channels with current program information. Different layout from Movies/TV Shows - focuses on live content. Shows channel logos, current program name, time re"
+        },
+        {
+          "step": 3,
+          "action": "Verify interactive elements",
+          "expected": "60 interactive elements present and functional"
+        }
+      ],
+      "screenshot": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_180133/step_014_live_tv.png"
+    }
+  ],
+  "status": "in_progress",
+  "total": 4
+}

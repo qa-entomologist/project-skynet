@@ -32,11 +32,53 @@ _inventory_history: list[dict] = []
 
 
 def _export_graph_live():
-    """Export graph data to JSON for real-time dashboard updates."""
+    """Export graph data and preliminary test cases for real-time dashboard updates."""
     try:
         export_path = os.path.join(PROJECT_ROOT, "web", "graph_data.json")
         with open(export_path, "w") as f:
             f.write(graph_store.to_json())
+    except Exception:
+        pass
+
+    try:
+        pages = [graph_store.get_page(pid) for pid in graph_store.pages]
+        pages = [p for p in pages if p and p.visited]
+        if not pages:
+            return
+
+        _type_map = {
+            "homepage": "Navigation", "category": "Navigation", "content_detail": "Functional",
+            "login": "Authentication", "signup": "Authentication", "search_results": "Functional",
+            "spa_view": "Functional", "player": "E2E", "settings": "Functional",
+        }
+        _prio_map = {
+            "homepage": "P0", "player": "P0", "content_detail": "P1",
+            "login": "P1", "signup": "P1", "search_results": "P1",
+            "category": "P1", "spa_view": "P2",
+        }
+
+        cases = []
+        for i, p in enumerate(pages, 1):
+            pt = p.page_type or "unknown"
+            steps = [{"step": 1, "action": f"Navigate to {p.url}", "expected": f"{p.title} loads successfully"}]
+            if p.observations:
+                steps.append({"step": 2, "action": "Inspect page content", "expected": p.observations[:200]})
+            if p.element_count:
+                steps.append({"step": len(steps) + 1, "action": f"Verify interactive elements", "expected": f"{p.element_count} interactive elements present and functional"})
+
+            cases.append({
+                "id": f"TC-{i:03d}",
+                "title": f"{p.title or p.url} — {pt.replace('_', ' ').title()}",
+                "priority": _prio_map.get(pt, "P2"),
+                "type": _type_map.get(pt, "Smoke"),
+                "steps": steps,
+                "screenshot": p.screenshot_path or "",
+            })
+
+        testrail_path = os.path.join(PROJECT_ROOT, "testrail_export.json")
+        with open(testrail_path, "w") as f:
+            import json as _json
+            _json.dump({"test_cases": cases, "status": "in_progress", "total": len(cases)}, f, indent=2)
     except Exception:
         pass
 
