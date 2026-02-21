@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>QA Entomologist - Live Dashboard</title>
     <script src="vis-network.min.js"></script>
     <style>
@@ -370,7 +373,7 @@
 
     async function loadGraph() {
         try {
-            const resp = await fetch('/web/graph_data.json?t=' + Date.now());
+            const resp = await fetch('/web/graph_data.json?t=' + Date.now(), {cache:'no-store'});
             if (!resp.ok) return;
             const data = await resp.json();
             renderGraph(data);
@@ -481,7 +484,7 @@
 
     async function loadTestrail(file, containerId, statId) {
         try {
-            const resp = await fetch(file + '?t=' + Date.now());
+            const resp = await fetch(file + '?t=' + Date.now(), {cache:'no-store'});
             if (!resp.ok) return;
             const data = await resp.json();
             const cases = data.test_cases || [];
@@ -540,7 +543,7 @@
         try {
             const allImages = [];
 
-            const topResp = await fetch('/screenshots/?t=' + Date.now());
+            const topResp = await fetch('/screenshots/?t=' + Date.now(), {cache:'no-store'});
             if (!topResp.ok) return;
             const topText = await topResp.text();
             const topDoc = new DOMParser().parseFromString(topText, 'text/html');
@@ -555,7 +558,7 @@
             const subdirs = topLinks.filter(l => l.endsWith('/') && l !== '../');
             for (const dir of subdirs) {
                 try {
-                    const subResp = await fetch('/screenshots/' + dir + '?t=' + Date.now());
+                    const subResp = await fetch('/screenshots/' + dir + '?t=' + Date.now(), {cache:'no-store'});
                     if (!subResp.ok) continue;
                     const subText = await subResp.text();
                     const subDoc = new DOMParser().parseFromString(subText, 'text/html');
@@ -602,7 +605,7 @@
     let lastAlertRunId = null;
     async function loadAlerts() {
         try {
-            const resp = await fetch('/web/auto_qa_report.json?t=' + Date.now());
+            const resp = await fetch('/web/auto_qa_report.json?t=' + Date.now(), {cache:'no-store'});
             if (!resp.ok) return;
             const data = await resp.json();
             if (!data.status || data.run_id === lastAlertRunId) return;
@@ -668,11 +671,10 @@
     }
 
     // ---- Refresh ----
-    function refreshAll() {
-        loadGraph();
-        loadTestCases();
-        loadAlerts();
-        loadScreenshots();
+    async function refreshAll() {
+        try {
+            await Promise.all([loadGraph(), loadTestCases(), loadAlerts(), loadScreenshots()]);
+        } catch (e) { console.warn('refresh error:', e); }
     }
 
     function toggleAutoRefresh() {
@@ -682,7 +684,7 @@
             btn.textContent = 'Live';
             btn.classList.add('active');
             document.querySelector('.pulse').style.display = 'inline-block';
-            refreshInterval = setInterval(refreshAll, 3000);
+            refreshInterval = setInterval(refreshAll, 2000);
         } else {
             btn.textContent = 'Paused';
             btn.classList.remove('active');
@@ -692,7 +694,7 @@
     }
 
     refreshAll();
-    refreshInterval = setInterval(refreshAll, 3000);
+    refreshInterval = setInterval(refreshAll, 2000);
     </script>
 </body>
 </html>
