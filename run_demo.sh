@@ -26,8 +26,14 @@ echo ""
 cd "$(dirname "$0")"
 source .venv/bin/activate
 
-# Clear previous run data so dashboard starts fresh
-echo "[0/4] Clearing previous data..."
+# Kill any leftover processes from previous runs
+echo "[0/4] Cleaning up..."
+pkill -f "qemu-system" 2>/dev/null || true
+pkill -f "_pw_helper" 2>/dev/null || true
+pkill -f "run_mobile" 2>/dev/null || true
+pkill -f "mock_datadog_server" 2>/dev/null || true
+pkill -f "http.server" 2>/dev/null || true
+sleep 1
 rm -f test_cases.md test_cases_mobile.md
 rm -f testrail_export.json testrail_export_mobile.json
 rm -f web/graph_data.json web/auto_qa_report.json
