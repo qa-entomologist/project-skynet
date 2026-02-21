@@ -72,13 +72,21 @@ def run_auto_qa_workflow(
         
         if not anomalies:
             logger.info(f"[{run_ctx.run_id}] No anomalies detected")
-            return {
+            no_report = {
                 "run_id": run_ctx.run_id,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "status": "no_anomalies",
                 "service": service,
                 "message": "No anomalies or crashes detected in the specified time window",
             }
+            import json, os
+            web_report = os.path.join(os.path.dirname(os.path.dirname(__file__)), "web", "auto_qa_report.json")
+            try:
+                with open(web_report, "w") as f:
+                    json.dump(no_report, f, indent=2, default=str)
+            except Exception:
+                pass
+            return no_report
         
         logger.info(f"[{run_ctx.run_id}] Found {len(anomalies)} anomalies")
         

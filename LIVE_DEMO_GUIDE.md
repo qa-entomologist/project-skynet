@@ -7,7 +7,7 @@
 1. **Start Mock Datadog Server**
    ```bash
    # Terminal 1
-   cd /Users/kjayadevan/project-skynet
+   cd "/Users/dgapuz/DataDog Hackathon"
    python3 mock_datadog_server.py --port 8080
    ```
    Keep this running throughout the demo.
@@ -71,7 +71,7 @@ curl "http://localhost:8080/api/v1/events?start=0&end=$(date +%s)" | python3 -m 
 
 **Terminal 3:**
 ```bash
-cd /Users/kjayadevan/project-skynet
+cd "/Users/dgapuz/DataDog Hackathon"
 python3 run_risk_advisor.py --auto-qa \
   --service "playback-service" \
   --platform "ios" \

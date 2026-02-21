@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datadog - Service Monitor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #e0e0e0; }
+
+        .topbar {
+            background: #632CA6;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .topbar .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+        .topbar .logo span { color: #c4b5fd; }
+        .topbar .nav-item {
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: default;
+        }
+        .topbar .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; }
+
+        .alert-banner {
+            display: none;
+            background: #dc2626;
+            color: #fff;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: 14px;
+            animation: pulse-bg 2s ease-in-out infinite;
+            text-align: center;
+        }
+        .alert-banner.active { display: flex; align-items: center; justify-content: center; gap: 12px; }
+        @keyframes pulse-bg {
+            0%, 100% { background: #dc2626; }
+            50% { background: #b91c1c; }
+        }
+
+        .header {
+            padding: 20px 24px 12px;
+            border-bottom: 1px solid #2a2a4a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .service-tag {
+            background: #632CA6;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .header .env-tag {
+            background: #16a34a;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        .header .time-range {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 16px 24px;
+        }
+        .metric-card {
+            background: #16162a;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .metric-card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric-card .value { font-size: 32px; font-weight: 700; margin-top: 4px; }
+        .metric-card .value.ok { color: #22c55e; }
+        .metric-card .value.warn { color: #f59e0b; }
+        .metric-card .value.crit { color: #ef4444; }
+        .metric-card .delta { font-size: 12px; margin-top: 4px; }
+        .metric-card .delta.up { color: #ef4444; }
+        .metric-card .delta.down { color: #22c55e; }
+
+        .chart-section {
+            padding: 0 24px 16px;
+        }
+        .chart-card {
+            background: #16162a;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .chart-card h3 { font-size: 14px; color: #aaa; margin-bottom: 12px; }
+        .chart-area {
+            height: 120px;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            padding-top: 8px;
+            position: relative;
+        }
+        .chart-bar {
+            flex: 1;
+            background: #632CA6;
+            border-radius: 2px 2px 0 0;
+            min-height: 2px;
+            transition: height 0.3s, background 0.3s;
+            position: relative;
+        }
+        .chart-bar.spike { background: #ef4444; }
+        .chart-baseline {
+            position: absolute;
+            left: 0; right: 0;
+            border-top: 1px dashed #444;
+            font-size: 10px;
+            color: #666;
+            padding-left: 4px;
+        }
+        .chart-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        .events-section {
+            padding: 0 24px 24px;
+        }
+        .events-section h3 {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 12px;
+        }
+        .event-list { display: flex; flex-direction: column; gap: 8px; }
+        .event-card {
+            background: #16162a;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: slide-in 0.4s ease-out;
+        }
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .event-card.critical { border-left: 4px solid #ef4444; }
+        .event-card.high { border-left: 4px solid #f59e0b; }
+        .event-card.medium { border-left: 4px solid #3b82f6; }
+        .event-icon {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .event-icon.crash { background: rgba(239,68,68,0.15); }
+        .event-icon.deploy { background: rgba(99,44,166,0.15); }
+        .event-body { flex: 1; }
+        .event-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .event-desc { font-size: 12px; color: #888; margin-bottom: 6px; }
+        .event-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .event-tag {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: #2a2a4a;
+            color: #aaa;
+        }
+        .event-tag.sev-critical { background: rgba(239,68,68,0.2); color: #fca5a5; }
+        .event-tag.sev-high { background: rgba(245,158,11,0.2); color: #fcd34d; }
+        .event-tag.platform { background: rgba(99,44,166,0.2); color: #c4b5fd; }
+        .event-time { font-size: 11px; color: #555; white-space: nowrap; margin-top: 2px; }
+
+        .empty-events {
+            text-align: center;
+            padding: 40px;
+            color: #555;
+            font-size: 14px;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-dot.green { background: #22c55e; }
+        .status-dot.red { background: #ef4444; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+        .footer-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #0f0f1e;
+            border-top: 1px solid #2a2a4a;
+            padding: 8px 24px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="logo"><span>dd</span> datadog</div>
+        <div class="nav-item">Infrastructure</div>
+        <div class="nav-item">APM</div>
+        <div class="nav-item active">Monitors</div>
+        <div class="nav-item">Dashboards</div>
+        <div class="nav-item">Logs</div>
+    </div>
+
+    <div class="alert-banner" id="alert-banner">
+        <span>&#9888;</span>
+        <span id="alert-text">ALERT: Crash rate spike detected on playback-service</span>
+    </div>
+
+    <div class="header">
+        <div>
+            <h1>
+                <span class="status-dot green" id="status-dot"></span>
+                Service: <span class="service-tag">playback-service</span>
+                <span class="env-tag">production</span>
+            </h1>
+        </div>
+        <div class="time-range" id="time-range">Last 15 minutes &middot; Live</div>
+    </div>
+
+    <div class="metrics-row">
+        <div class="metric-card">
+            <div class="label">Crash Rate</div>
+            <div class="value ok" id="crash-rate-val">0.1%</div>
+            <div class="delta" id="crash-rate-delta">&mdash; baseline</div>
+        </div>
+        <div class="metric-card">
+            <div class="label">Error Rate</div>
+            <div class="value ok" id="error-rate-val">2.0%</div>
+            <div class="delta" id="error-rate-delta">&mdash; baseline</div>
+        </div>
+        <div class="metric-card">
+            <div class="label">Active Crashes</div>
+            <div class="value ok" id="active-crashes">0</div>
+            <div class="delta" id="crash-delta">&mdash; no incidents</div>
+        </div>
+        <div class="metric-card">
+            <div class="label">Affected Users</div>
+            <div class="value ok" id="affected-users">0</div>
+            <div class="delta" id="users-delta">&mdash;</div>
+        </div>
+    </div>
+
+    <div class="chart-section">
+        <div class="chart-card">
+            <h3>crash_rate{service:playback-service} &mdash; avg over 1m</h3>
+            <div class="chart-area" id="chart-area">
+                <div class="chart-baseline" style="bottom:10%">threshold: 2%</div>
+            </div>
+            <div class="chart-labels">
+                <span id="chart-start">-15m</span>
+                <span>-10m</span>
+                <span>-5m</span>
+                <span id="chart-end">now</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="events-section">
+        <h3>Recent Events</h3>
+        <div class="event-list" id="event-list">
+            <div class="empty-events" id="no-events">
+                <span class="status-dot green"></span> No incidents &mdash; all systems operational
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bar">
+        <span>Mock Datadog Monitor &mdash; Demo Mode</span>
+        <span id="poll-status">Polling mock server...</span>
+    </div>
+
+    <script>
+    const MOCK_PORT = 9090;
+    const MOCK_BASE = `http://localhost:${MOCK_PORT}`;
+    let crashesActive = false;
+    let chartData = [];
+    const MAX_BARS = 30;
+
+    for (let i = 0; i < MAX_BARS; i++) chartData.push(0.001);
+
+    function renderChart() {
+        const area = document.getElementById('chart-area');
+        const baseline = area.querySelector('.chart-baseline');
+        area.innerHTML = '';
+        area.appendChild(baseline);
+
+        const maxVal = Math.max(0.06, ...chartData);
+        chartData.forEach(val => {
+            const bar = document.createElement('div');
+            bar.className = 'chart-bar' + (val > 0.02 ? ' spike' : '');
+            bar.style.height = Math.max(2, (val / maxVal) * 110) + 'px';
+            area.appendChild(bar);
+        });
+
+        const thresholdPct = (0.02 / maxVal) * 100;
+        baseline.style.bottom = Math.min(90, thresholdPct) + '%';
+    }
+
+    function timeAgo(ts) {
+        const diff = Math.floor(Date.now() / 1000) - ts;
+        if (diff < 60) return `${diff}s ago`;
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        return `${Math.floor(diff / 3600)}h ago`;
+    }
+
+    function renderEvents(events) {
+        const list = document.getElementById('event-list');
+        const noEvents = document.getElementById('no-events');
+
+        if (!events || events.length === 0) {
+            list.innerHTML = '';
+            list.appendChild(noEvents);
+            noEvents.style.display = 'block';
+            return;
+        }
+
+        noEvents.style.display = 'none';
+        list.innerHTML = '';
+
+        events.sort((a, b) => b.date_happened - a.date_happened);
+
+        events.forEach(ev => {
+            const isCrash = ev.source === 'crash';
+            const severity = (ev.tags || []).find(t => t.startsWith('severity:'));
+            const sevLevel = severity ? severity.split(':')[1] : 'medium';
+            const platform = (ev.tags || []).find(t => t.startsWith('platform:'));
+            const platVal = platform ? platform.split(':')[1] : '';
+
+            const card = document.createElement('div');
+            card.className = `event-card ${sevLevel}`;
+            card.innerHTML = `
+                <div class="event-icon ${isCrash ? 'crash' : 'deploy'}">${isCrash ? '&#x1F4A5;' : '&#x1F680;'}</div>
+                <div class="event-body">
+                    <div class="event-title">${ev.title}</div>
+                    <div class="event-desc">${ev.text}</div>
+                    <div class="event-tags">
+                        ${isCrash ? `<span class="event-tag sev-${sevLevel}">${sevLevel}</span>` : ''}
+                        ${platVal ? `<span class="event-tag platform">${platVal}</span>` : ''}
+                        ${(ev.tags || []).filter(t => t.startsWith('feature:')).map(t => `<span class="event-tag">${t.split(':')[1]}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="event-time">${timeAgo(ev.date_happened)}</div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    async function pollMockServer() {
+        try {
+            const now = Math.floor(Date.now() / 1000);
+            const start = now - 900;
+
+            const [metricsResp, eventsResp] = await Promise.all([
+                fetch(`${MOCK_BASE}/api/v1/query?query=avg:crash_rate{service:playback-service}&from=${start}&to=${now}`),
+                fetch(`${MOCK_BASE}/api/v1/events?start=${start}&end=${now}&tags=service:playback-service`),
+            ]);
+
+            const metrics = await metricsResp.json();
+            const events = await eventsResp.json();
+
+            const crashEvents = (events.events || []).filter(e => e.source === 'crash');
+            const deployEvents = (events.events || []).filter(e => e.source === 'deploy');
+            const allEvents = events.events || [];
+
+            const series = (metrics.series || [])[0];
+            let currentCrashRate = 0.001;
+            if (series && series.pointlist && series.pointlist.length > 0) {
+                const lastPoint = series.pointlist[series.pointlist.length - 1];
+                currentCrashRate = lastPoint[1] || lastPoint.value || 0.001;
+            }
+
+            chartData.push(currentCrashRate);
+            if (chartData.length > MAX_BARS) chartData.shift();
+            renderChart();
+
+            const crVal = document.getElementById('crash-rate-val');
+            const crDelta = document.getElementById('crash-rate-delta');
+            const erVal = document.getElementById('error-rate-val');
+            const erDelta = document.getElementById('error-rate-delta');
+            const acVal = document.getElementById('active-crashes');
+            const acDelta = document.getElementById('crash-delta');
+            const auVal = document.getElementById('affected-users');
+            const auDelta = document.getElementById('users-delta');
+            const dot = document.getElementById('status-dot');
+            const banner = document.getElementById('alert-banner');
+
+            const pct = (currentCrashRate * 100).toFixed(1);
+
+            if (crashEvents.length > 0) {
+                crashesActive = true;
+                crVal.textContent = pct + '%';
+                crVal.className = 'value crit';
+                crDelta.textContent = '&#x25B2; +' + ((currentCrashRate - 0.01) * 100).toFixed(1) + '% from baseline';
+                crDelta.className = 'delta up';
+                crDelta.innerHTML = crDelta.textContent;
+
+                erVal.textContent = '8.0%';
+                erVal.className = 'value warn';
+                erDelta.innerHTML = '&#x25B2; +6.0% from baseline';
+                erDelta.className = 'delta up';
+
+                acVal.textContent = crashEvents.length;
+                acVal.className = 'value crit';
+                acDelta.innerHTML = `&#x25B2; ${crashEvents.length} active incidents`;
+                acDelta.className = 'delta up';
+
+                const totalUsers = crashEvents.reduce((s, e) => s + 42, 0);
+                auVal.textContent = totalUsers;
+                auVal.className = 'value warn';
+                auDelta.innerHTML = '&#x25B2; impacted this window';
+                auDelta.className = 'delta up';
+
+                dot.className = 'status-dot red';
+                banner.className = 'alert-banner active';
+                document.getElementById('alert-text').textContent =
+                    `ALERT: ${crashEvents.length} crash(es) detected on playback-service — crash rate at ${pct}%`;
+            } else {
+                crVal.textContent = pct + '%';
+                crVal.className = 'value ok';
+                crDelta.innerHTML = '&mdash; baseline';
+                crDelta.className = 'delta';
+
+                erVal.textContent = '2.0%';
+                erVal.className = 'value ok';
+
+                acVal.textContent = '0';
+                acVal.className = 'value ok';
+                acDelta.innerHTML = '&mdash; no incidents';
+
+                auVal.textContent = '0';
+                auVal.className = 'value ok';
+
+                dot.className = 'status-dot green';
+                banner.className = 'alert-banner';
+            }
+
+            renderEvents(allEvents);
+            document.getElementById('poll-status').textContent =
+                `Last poll: ${new Date().toLocaleTimeString()} — ${crashesActive ? 'ALERTING' : 'OK'}`;
+
+        } catch (e) {
+            document.getElementById('poll-status').textContent = `Poll error: ${e.message}`;
+        }
+    }
+
+    renderChart();
+    pollMockServer();
+    setInterval(pollMockServer, 3000);
+    </script>
+</body>
+</html>

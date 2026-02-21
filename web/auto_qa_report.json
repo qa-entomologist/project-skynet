@@ -1,0 +1,397 @@
+{
+  "run_id": "39588e66-463",
+  "timestamp": "2026-02-21T01:42:34.549444+00:00",
+  "status": "completed",
+  "service": "playback-service",
+  "anomalies_detected": 2,
+  "crashes_processed": 6,
+  "results": [
+    {
+      "crash_id": "crash_001",
+      "status": "processed",
+      "code_analysis": {
+        "is_reproducible": true,
+        "confidence": 0.85,
+        "likely_cause": "Null pointer exception in playback buffer - recent code change removed null check",
+        "affected_files": [
+          "PlaybackService.java",
+          "BufferManager.java"
+        ],
+        "reproduction_steps": [
+          "1. Navigate to video playback page",
+          "2. Start playback with empty buffer",
+          "3. Crash occurs when buffer.process() is called without null check"
+        ],
+        "code_analysis": "Demo mode: Crash appears reproducible based on recent code changes removing null safety checks."
+      },
+      "reproduction_test": {
+        "reproduced": true,
+        "test_duration_seconds": 1.51,
+        "evidence": {
+          "screenshots": [],
+          "logs": [
+            {
+              "step": 2,
+              "error": "NullPointerException in playback buffer",
+              "timestamp": "2026-02-21T01:42:27.007534+00:00"
+            }
+          ],
+          "metrics": {}
+        },
+        "test_steps_executed": [
+          {
+            "step_number": 1,
+            "step_description": "1. Navigate to video playback page",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:26.007073+00:00",
+            "details": {
+              "step_type": "navigation",
+              "environment": "alpha"
+            }
+          },
+          {
+            "step_number": 2,
+            "step_description": "2. Start playback with empty buffer",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:27.007521+00:00",
+            "details": {
+              "step_type": "action",
+              "environment": "alpha",
+              "service": "playback-service"
+            }
+          }
+        ],
+        "error_encountered": "NullPointerException in playback buffer",
+        "environment": "alpha",
+        "timestamp": "2026-02-21T01:42:27.007611+00:00"
+      },
+      "qa_recommendation": "\u2705 CONFIRMED REPRODUCIBLE - Crash successfully reproduced in test environment. Confidence: 85%. Root cause: Null pointer exception in playback buffer - recent code change removed null check. Immediate action: Block release and fix identified issue in PlaybackService.java, BufferManager.java.",
+      "severity": "medium",
+      "timestamp": "2026-02-21T01:42:27.007621+00:00"
+    },
+    {
+      "crash_id": "crash_002",
+      "status": "processed",
+      "code_analysis": {
+        "is_reproducible": true,
+        "confidence": 0.85,
+        "likely_cause": "Null pointer exception in playback buffer - recent code change removed null check",
+        "affected_files": [
+          "PlaybackService.java",
+          "BufferManager.java"
+        ],
+        "reproduction_steps": [
+          "1. Navigate to video playback page",
+          "2. Start playback with empty buffer",
+          "3. Crash occurs when buffer.process() is called without null check"
+        ],
+        "code_analysis": "Demo mode: Crash appears reproducible based on recent code changes removing null safety checks."
+      },
+      "reproduction_test": {
+        "reproduced": true,
+        "test_duration_seconds": 1.51,
+        "evidence": {
+          "screenshots": [],
+          "logs": [
+            {
+              "step": 2,
+              "error": "NullPointerException in playback buffer",
+              "timestamp": "2026-02-21T01:42:28.513185+00:00"
+            }
+          ],
+          "metrics": {}
+        },
+        "test_steps_executed": [
+          {
+            "step_number": 1,
+            "step_description": "1. Navigate to video playback page",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:27.511424+00:00",
+            "details": {
+              "step_type": "navigation",
+              "environment": "alpha"
+            }
+          },
+          {
+            "step_number": 2,
+            "step_description": "2. Start playback with empty buffer",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:28.513163+00:00",
+            "details": {
+              "step_type": "action",
+              "environment": "alpha",
+              "service": "playback-service"
+            }
+          }
+        ],
+        "error_encountered": "NullPointerException in playback buffer",
+        "environment": "alpha",
+        "timestamp": "2026-02-21T01:42:28.513339+00:00"
+      },
+      "qa_recommendation": "\u2705 CONFIRMED REPRODUCIBLE - Crash successfully reproduced in test environment. Confidence: 85%. Root cause: Null pointer exception in playback buffer - recent code change removed null check. Immediate action: Block release and fix identified issue in PlaybackService.java, BufferManager.java.",
+      "severity": "medium",
+      "timestamp": "2026-02-21T01:42:28.513355+00:00"
+    },
+    {
+      "crash_id": "crash_003",
+      "status": "processed",
+      "code_analysis": {
+        "is_reproducible": true,
+        "confidence": 0.85,
+        "likely_cause": "Null pointer exception in playback buffer - recent code change removed null check",
+        "affected_files": [
+          "PlaybackService.java",
+          "BufferManager.java"
+        ],
+        "reproduction_steps": [
+          "1. Navigate to video playback page",
+          "2. Start playback with empty buffer",
+          "3. Crash occurs when buffer.process() is called without null check"
+        ],
+        "code_analysis": "Demo mode: Crash appears reproducible based on recent code changes removing null safety checks."
+      },
+      "reproduction_test": {
+        "reproduced": true,
+        "test_duration_seconds": 1.5,
+        "evidence": {
+          "screenshots": [],
+          "logs": [
+            {
+              "step": 2,
+              "error": "NullPointerException in playback buffer",
+              "timestamp": "2026-02-21T01:42:30.018319+00:00"
+            }
+          ],
+          "metrics": {}
+        },
+        "test_steps_executed": [
+          {
+            "step_number": 1,
+            "step_description": "1. Navigate to video playback page",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:29.014991+00:00",
+            "details": {
+              "step_type": "navigation",
+              "environment": "alpha"
+            }
+          },
+          {
+            "step_number": 2,
+            "step_description": "2. Start playback with empty buffer",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:30.018293+00:00",
+            "details": {
+              "step_type": "action",
+              "environment": "alpha",
+              "service": "playback-service"
+            }
+          }
+        ],
+        "error_encountered": "NullPointerException in playback buffer",
+        "environment": "alpha",
+        "timestamp": "2026-02-21T01:42:30.018512+00:00"
+      },
+      "qa_recommendation": "\u2705 CONFIRMED REPRODUCIBLE - Crash successfully reproduced in test environment. Confidence: 85%. Root cause: Null pointer exception in playback buffer - recent code change removed null check. Immediate action: Block release and fix identified issue in PlaybackService.java, BufferManager.java.",
+      "severity": "medium",
+      "timestamp": "2026-02-21T01:42:30.018567+00:00"
+    },
+    {
+      "crash_id": "crash_001",
+      "status": "processed",
+      "code_analysis": {
+        "is_reproducible": true,
+        "confidence": 0.85,
+        "likely_cause": "Null pointer exception in playback buffer - recent code change removed null check",
+        "affected_files": [
+          "PlaybackService.java",
+          "BufferManager.java"
+        ],
+        "reproduction_steps": [
+          "1. Navigate to video playback page",
+          "2. Start playback with empty buffer",
+          "3. Crash occurs when buffer.process() is called without null check"
+        ],
+        "code_analysis": "Demo mode: Crash appears reproducible based on recent code changes removing null safety checks."
+      },
+      "reproduction_test": {
+        "reproduced": true,
+        "test_duration_seconds": 1.51,
+        "evidence": {
+          "screenshots": [],
+          "logs": [
+            {
+              "step": 2,
+              "error": "NullPointerException in playback buffer",
+              "timestamp": "2026-02-21T01:42:31.533889+00:00"
+            }
+          ],
+          "metrics": {}
+        },
+        "test_steps_executed": [
+          {
+            "step_number": 1,
+            "step_description": "1. Navigate to video playback page",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:30.530408+00:00",
+            "details": {
+              "step_type": "navigation",
+              "environment": "alpha"
+            }
+          },
+          {
+            "step_number": 2,
+            "step_description": "2. Start playback with empty buffer",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:31.533874+00:00",
+            "details": {
+              "step_type": "action",
+              "environment": "alpha",
+              "service": "playback-service"
+            }
+          }
+        ],
+        "error_encountered": "NullPointerException in playback buffer",
+        "environment": "alpha",
+        "timestamp": "2026-02-21T01:42:31.533991+00:00"
+      },
+      "qa_recommendation": "\u2705 CONFIRMED REPRODUCIBLE - Crash successfully reproduced in test environment. Confidence: 85%. Root cause: Null pointer exception in playback buffer - recent code change removed null check. Immediate action: Block release and fix identified issue in PlaybackService.java, BufferManager.java.",
+      "severity": "medium",
+      "timestamp": "2026-02-21T01:42:31.534002+00:00"
+    },
+    {
+      "crash_id": "crash_002",
+      "status": "processed",
+      "code_analysis": {
+        "is_reproducible": true,
+        "confidence": 0.85,
+        "likely_cause": "Null pointer exception in playback buffer - recent code change removed null check",
+        "affected_files": [
+          "PlaybackService.java",
+          "BufferManager.java"
+        ],
+        "reproduction_steps": [
+          "1. Navigate to video playback page",
+          "2. Start playback with empty buffer",
+          "3. Crash occurs when buffer.process() is called without null check"
+        ],
+        "code_analysis": "Demo mode: Crash appears reproducible based on recent code changes removing null safety checks."
+      },
+      "reproduction_test": {
+        "reproduced": true,
+        "test_duration_seconds": 1.51,
+        "evidence": {
+          "screenshots": [],
+          "logs": [
+            {
+              "step": 2,
+              "error": "NullPointerException in playback buffer",
+              "timestamp": "2026-02-21T01:42:33.042403+00:00"
+            }
+          ],
+          "metrics": {}
+        },
+        "test_steps_executed": [
+          {
+            "step_number": 1,
+            "step_description": "1. Navigate to video playback page",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:32.037292+00:00",
+            "details": {
+              "step_type": "navigation",
+              "environment": "alpha"
+            }
+          },
+          {
+            "step_number": 2,
+            "step_description": "2. Start playback with empty buffer",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:33.042355+00:00",
+            "details": {
+              "step_type": "action",
+              "environment": "alpha",
+              "service": "playback-service"
+            }
+          }
+        ],
+        "error_encountered": "NullPointerException in playback buffer",
+        "environment": "alpha",
+        "timestamp": "2026-02-21T01:42:33.042682+00:00"
+      },
+      "qa_recommendation": "\u2705 CONFIRMED REPRODUCIBLE - Crash successfully reproduced in test environment. Confidence: 85%. Root cause: Null pointer exception in playback buffer - recent code change removed null check. Immediate action: Block release and fix identified issue in PlaybackService.java, BufferManager.java.",
+      "severity": "medium",
+      "timestamp": "2026-02-21T01:42:33.042707+00:00"
+    },
+    {
+      "crash_id": "crash_003",
+      "status": "processed",
+      "code_analysis": {
+        "is_reproducible": true,
+        "confidence": 0.85,
+        "likely_cause": "Null pointer exception in playback buffer - recent code change removed null check",
+        "affected_files": [
+          "PlaybackService.java",
+          "BufferManager.java"
+        ],
+        "reproduction_steps": [
+          "1. Navigate to video playback page",
+          "2. Start playback with empty buffer",
+          "3. Crash occurs when buffer.process() is called without null check"
+        ],
+        "code_analysis": "Demo mode: Crash appears reproducible based on recent code changes removing null safety checks."
+      },
+      "reproduction_test": {
+        "reproduced": true,
+        "test_duration_seconds": 1.51,
+        "evidence": {
+          "screenshots": [],
+          "logs": [
+            {
+              "step": 2,
+              "error": "NullPointerException in playback buffer",
+              "timestamp": "2026-02-21T01:42:34.549281+00:00"
+            }
+          ],
+          "metrics": {}
+        },
+        "test_steps_executed": [
+          {
+            "step_number": 1,
+            "step_description": "1. Navigate to video playback page",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:33.544018+00:00",
+            "details": {
+              "step_type": "navigation",
+              "environment": "alpha"
+            }
+          },
+          {
+            "step_number": 2,
+            "step_description": "2. Start playback with empty buffer",
+            "status": "completed",
+            "timestamp": "2026-02-21T01:42:34.549267+00:00",
+            "details": {
+              "step_type": "action",
+              "environment": "alpha",
+              "service": "playback-service"
+            }
+          }
+        ],
+        "error_encountered": "NullPointerException in playback buffer",
+        "environment": "alpha",
+        "timestamp": "2026-02-21T01:42:34.549358+00:00"
+      },
+      "qa_recommendation": "\u2705 CONFIRMED REPRODUCIBLE - Crash successfully reproduced in test environment. Confidence: 85%. Root cause: Null pointer exception in playback buffer - recent code change removed null check. Immediate action: Block release and fix identified issue in PlaybackService.java, BufferManager.java.",
+      "severity": "medium",
+      "timestamp": "2026-02-21T01:42:34.549368+00:00"
+    }
+  ],
+  "summary": {
+    "overall_risk_score": 80,
+    "recommendation": "BLOCK_RELEASE",
+    "total_crashes": 6,
+    "reproduced": 6,
+    "not_reproducible": 0,
+    "needs_manual_qa": 0,
+    "summary_message": "Processed 6 crashes: 6 confirmed reproducible, 0 not reproducible, 0 need manual QA"
+  }
+}

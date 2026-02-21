@@ -31,6 +31,16 @@ _last_inventory: dict | None = None
 _inventory_history: list[dict] = []
 
 
+def _export_graph_live():
+    """Export graph data to JSON for real-time dashboard updates."""
+    try:
+        export_path = os.path.join(PROJECT_ROOT, "web", "graph_data.json")
+        with open(export_path, "w") as f:
+            f.write(graph_store.to_json())
+    except Exception:
+        pass
+
+
 def _page_id(url: str) -> str:
     """Stable ID from a normalized URL. Includes hash fragments for SPA routing."""
     parsed = urlparse(url)
@@ -126,6 +136,7 @@ def navigate_to_url(url: str) -> str:
         depth=_current_depth,
     )
     is_new = graph_store.add_page(page)
+    _export_graph_live()
 
     return json.dumps({
         "status": "ok",
@@ -208,6 +219,7 @@ def scan_page(page_type: str, observations: str) -> str:
             observations=observations,
             available_actions=actions_text,
         )
+    _export_graph_live()
 
     result = {
         "page_title": browser.title,
@@ -648,6 +660,7 @@ def click_element(element_index: int, reason: str, expected_result: str,
             observation=f"Expected: {expected_result}",
         )
         graph_store.add_edge(edge)
+        _export_graph_live()
     else:
         is_new = False
 
@@ -725,6 +738,7 @@ def go_back(method: str = "auto") -> str:
         element_text=method_used,
     )
     graph_store.add_edge(edge)
+    _export_graph_live()
 
     return json.dumps({
         "status": "ok",
@@ -782,6 +796,16 @@ def generate_test_cases() -> str:
     as structured data. Call this after exploration is complete. You MUST then
     write the full test case report using write_test_report.
     """
+    page_count = graph_store.page_count()
+    if page_count < 5:
+        return json.dumps({
+            "error": f"NOT ENOUGH EXPLORATION. Only {page_count} pages discovered — need at least 5. "
+            "Go back and click MORE nav items, content links, and category pages. "
+            "You must visit: every nav item, at least 2 content detail pages, search results, and auth pages. "
+            "Do NOT call generate_test_cases again until you have explored at least 5 distinct pages.",
+            "pages_found": page_count,
+            "required": 5,
+        })
     flows = graph_store.get_flows()
     pages = {pid: graph_store.get_page(pid) for pid in graph_store.pages}
 
@@ -1040,20 +1064,19 @@ When clicking something causes `changes_from_previous` to show header items appe
 - resize_viewport back to 1920x1080 when done
 
 ## PHASE 3: TEST CASE GENERATION
-After thorough exploration (35+ tool calls minimum), call generate_test_cases then write_test_report.
+CRITICAL: You MUST explore at least 8-10 DISTINCT pages before generating test cases. The system will REJECT your generate_test_cases call if you haven't visited enough pages.
 
-STOP — before generating, verify you completed this checklist:
-[ ] Clicked every nav item in the header/menu
-[ ] Explored hover dropdowns and clicked items inside them
-[ ] Tested the primary function end-to-end (e.g., played a video, opened a product)
-[ ] Used search with a real query AND a gibberish query
-[ ] Clicked into Sign In AND Sign Up (documented all fields and auth methods)
-[ ] Scrolled down on at least 3 pages
-[ ] Checked a "Forgot Password" or similar secondary auth flow
-[ ] Tested at least one mode/state change (if available)
-[ ] Checked page health on at least 2 pages
-[ ] Tested responsive design at mobile viewport
-If you skipped any of these, GO BACK AND DO THEM before generating test cases.
+EXPLORATION REQUIREMENTS (do ALL of these — no shortcuts):
+1. Click EVERY nav item in the header (Movies, TV Shows, Live TV, Español, Tubi Kids, etc.) — each one is a new page
+2. Click into at least 2 content items (e.g., a movie → detail page, a show → detail page)
+3. Test search with a real query AND gibberish
+4. Click Sign In and Sign Up
+5. Explore hover dropdowns and click items inside them
+6. Scroll down on every page you visit
+7. Check page health on 2+ pages
+8. Test responsive design
+
+After visiting 8+ distinct pages AND 40+ tool calls, THEN call generate_test_cases → write_test_report → export_testrail_json.
 
 Generate test cases covering EVERYTHING you discovered:
 1. **Primary function** (P0) — the site's core action, end-to-end

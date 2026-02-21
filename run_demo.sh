@@ -20,6 +20,7 @@ echo "  QA Entomologist — Demo Mode"
 echo "  Target:       $TARGET_URL"
 echo "  Crash delay:  ${CRASH_DELAY}s"
 echo "  Dashboard:    http://localhost:$DASHBOARD_PORT/web/index.html"
+echo "  DD Monitor:   http://localhost:$DASHBOARD_PORT/web/datadog_monitor.html"
 echo "============================================================"
 echo ""
 
@@ -59,6 +60,7 @@ MOCK_PID=$!
 
 sleep 1
 open "http://localhost:$DASHBOARD_PORT/web/index.html"
+open "http://localhost:$DASHBOARD_PORT/web/datadog_monitor.html"
 
 # 3. Start auto-QA poller in background (polls every 10s, picks up crash after delay)
 echo "[3/4] Starting anomaly monitor (will detect crash after ${CRASH_DELAY}s)..."
@@ -84,7 +86,8 @@ wait $QA_PID 2>/dev/null
 echo ""
 echo "============================================================"
 echo "  Demo complete!"
-echo "  Dashboard: http://localhost:$DASHBOARD_PORT/web/index.html"
+echo "  Dashboard:  http://localhost:$DASHBOARD_PORT/web/index.html"
+echo "  DD Monitor: http://localhost:$DASHBOARD_PORT/web/datadog_monitor.html"
 echo "============================================================"
 
 wait

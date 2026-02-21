@@ -94,29 +94,33 @@ def fetch_recent_deployments(
 # Live Datadog API implementations
 # ──────────────────────────────────────────────────────────────────────
 
+def _mock_config():
+    """Build a Configuration pointing at the mock server with dummy keys."""
+    from datadog_api_client import Configuration
+    from urllib.parse import urlparse
+    config = Configuration()
+    config.api_key["apiKeyAuth"] = DD_API_KEY or "mock-api-key"
+    config.api_key["appKeyAuth"] = DD_APP_KEY or "mock-app-key"
+    if DD_MOCK_SERVER:
+        parsed = urlparse(DD_MOCK_SERVER)
+        config.host = f"{parsed.scheme}://{parsed.netloc}"
+        logger.info(f"Using mock Datadog server: {config.host}")
+    else:
+        config.server_variables["site"] = DD_SITE
+    return config
+
+
 def _detect_anomalies_live(
     service: str,
     lookback_minutes: int,
 ) -> list[dict[str, Any]]:
     """Detect anomalies using Datadog API (or mock server)."""
     try:
-        from datadog_api_client import Configuration, ApiClient
+        from datadog_api_client import ApiClient
         from datadog_api_client.v1.api.events_api import EventsApi
         from datadog_api_client.v1.api.metrics_api import MetricsApi
         
-        config = Configuration()
-        config.api_key["apiKeyAuth"] = DD_API_KEY
-        config.api_key["appKeyAuth"] = DD_APP_KEY
-        
-        # Use mock server if configured, otherwise use real Datadog
-        if DD_MOCK_SERVER:
-            # Extract host and port from mock server URL
-            from urllib.parse import urlparse
-            parsed = urlparse(DD_MOCK_SERVER)
-            config.host = f"{parsed.scheme}://{parsed.netloc}"
-            logger.info(f"Using mock Datadog server: {config.host}")
-        else:
-            config.server_variables["site"] = DD_SITE
+        config = _mock_config()
         
         now = int(time.time())
         start = now - (lookback_minutes * 60)
@@ -224,21 +228,11 @@ def _fetch_crash_details_live(
 ) -> list[dict[str, Any]]:
     """Fetch detailed crash information from Datadog (or mock server)."""
     try:
-        from datadog_api_client import Configuration, ApiClient
+        from datadog_api_client import ApiClient
         from datadog_api_client.v1.api.events_api import EventsApi
         from datadog_api_client.v1.api.logs_api import LogsApi
         
-        config = Configuration()
-        config.api_key["apiKeyAuth"] = DD_API_KEY
-        config.api_key["appKeyAuth"] = DD_APP_KEY
-        
-        # Use mock server if configured
-        if DD_MOCK_SERVER:
-            from urllib.parse import urlparse
-            parsed = urlparse(DD_MOCK_SERVER)
-            config.host = f"{parsed.scheme}://{parsed.netloc}"
-        else:
-            config.server_variables["site"] = DD_SITE
+        config = _mock_config()
         
         now = int(time.time())
         start = now - (lookback_minutes * 60)
@@ -291,20 +285,10 @@ def _fetch_deployments_live(
 ) -> list[dict[str, Any]]:
     """Fetch recent deployments from Datadog Events (or mock server)."""
     try:
-        from datadog_api_client import Configuration, ApiClient
+        from datadog_api_client import ApiClient
         from datadog_api_client.v1.api.events_api import EventsApi
         
-        config = Configuration()
-        config.api_key["apiKeyAuth"] = DD_API_KEY
-        config.api_key["appKeyAuth"] = DD_APP_KEY
-        
-        # Use mock server if configured
-        if DD_MOCK_SERVER:
-            from urllib.parse import urlparse
-            parsed = urlparse(DD_MOCK_SERVER)
-            config.host = f"{parsed.scheme}://{parsed.netloc}"
-        else:
-            config.server_variables["site"] = DD_SITE
+        config = _mock_config()
         
         now = int(time.time())
         start = now - (lookback_hours * 3600)
