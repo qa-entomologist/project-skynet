@@ -75,10 +75,21 @@ def _export_graph_live():
                 "screenshot": p.screenshot_path or "",
             })
 
+        import json as _json
         testrail_path = os.path.join(PROJECT_ROOT, "testrail_export.json")
         with open(testrail_path, "w") as f:
-            import json as _json
             _json.dump({"test_cases": cases, "status": "in_progress", "total": len(cases)}, f, indent=2)
+
+        md_path = os.path.join(PROJECT_ROOT, "test_cases.md")
+        with open(md_path, "w") as f:
+            f.write("# Test Cases (Live — In Progress)\n\n")
+            for c in cases:
+                f.write(f"### {c['id']}: {c['title']}\n")
+                f.write(f"**Priority:** {c['priority']} | **Type:** {c['type']}\n\n")
+                f.write("| Step | Action | Expected Result |\n|------|--------|----------------|\n")
+                for s in c['steps']:
+                    f.write(f"| {s['step']} | {s['action']} | {s['expected']} |\n")
+                f.write("\n")
     except Exception:
         pass
 
