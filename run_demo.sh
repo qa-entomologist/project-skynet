@@ -26,6 +26,13 @@ echo ""
 cd "$(dirname "$0")"
 source .venv/bin/activate
 
+# Clear previous run data so dashboard starts fresh
+echo "[0/4] Clearing previous data..."
+rm -f test_cases.md test_cases_mobile.md
+rm -f testrail_export.json testrail_export_mobile.json
+rm -f web/graph_data.json web/auto_qa_report.json
+echo '{"nodes":[],"edges":[]}' > web/graph_data.json
+
 cleanup() {
     echo ""
     echo "Shutting down demo..."

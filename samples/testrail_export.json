@@ -1,0 +1,231 @@
+{
+  "format": "testrail",
+  "version": "1.0",
+  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_163335",
+  "test_cases": [
+    {
+      "title": "Video Playback Flow",
+      "custom_id": "TC-001",
+      "priority_id": 1,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Navigate to homepage",
+          "expected": "Homepage loads with content rows and featured content"
+        },
+        {
+          "content": "Click Play button on any content tile",
+          "expected": "Video player page loads"
+        },
+        {
+          "content": "Verify video player controls",
+          "expected": "Play/pause, volume, fullscreen controls visible"
+        },
+        {
+          "content": "Check video playback",
+          "expected": "Video starts playing"
+        },
+        {
+          "content": "Verify player UI elements",
+          "expected": "Title, duration, progress bar visible"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Content Navigation",
+      "custom_id": "TC-002",
+      "priority_id": 2,
+      "type_id": 4,
+      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Click Movies in header",
+          "expected": "Movies page loads with categorized content"
+        },
+        {
+          "content": "Click TV Shows in header",
+          "expected": "TV Shows page loads with series content"
+        },
+        {
+          "content": "Click Live TV in header",
+          "expected": "Live TV channels page loads"
+        },
+        {
+          "content": "Click Browse dropdown",
+          "expected": "Category options appear"
+        },
+        {
+          "content": "Verify content grids",
+          "expected": "Thumbnails, titles, and metadata visible"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Search Functionality",
+      "custom_id": "TC-003",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Enter valid movie title in search",
+          "expected": "Results appear with matching content"
+        },
+        {
+          "content": "Enter gibberish text xyzabc123999",
+          "expected": "No results found message displays"
+        },
+        {
+          "content": "Clear search",
+          "expected": "Returns to previous view"
+        },
+        {
+          "content": "Search with special characters",
+          "expected": "Handles special characters appropriately"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Authentication Flow",
+      "custom_id": "TC-004",
+      "priority_id": 2,
+      "type_id": 5,
+      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Click Sign In",
+          "expected": "Login page loads"
+        },
+        {
+          "content": "Verify auth options",
+          "expected": "Email/password and social login options present"
+        },
+        {
+          "content": "Click Register",
+          "expected": "Registration page loads"
+        },
+        {
+          "content": "Click Forgot Password",
+          "expected": "Password reset flow available"
+        },
+        {
+          "content": "Tab through form fields",
+          "expected": "Focus order is logical and accessible"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Mobile Responsive Design",
+      "custom_id": "TC-005",
+      "priority_id": 3,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_steps_separated": [
+        {
+          "content": "View at 375x812 (mobile)",
+          "expected": "Layout adapts to single column"
+        },
+        {
+          "content": "Check navigation",
+          "expected": "Menu collapses to hamburger"
+        },
+        {
+          "content": "Verify content rows",
+          "expected": "Thumbnails resize appropriately"
+        },
+        {
+          "content": "Test video player",
+          "expected": "Controls optimized for touch"
+        },
+        {
+          "content": "Check footer",
+          "expected": "Links stack vertically"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Kids Mode",
+      "custom_id": "TC-006",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Click Tubi Kids",
+          "expected": "Switches to kids-safe content"
+        },
+        {
+          "content": "Verify content filtering",
+          "expected": "Only family-friendly content shown"
+        },
+        {
+          "content": "Check navigation options",
+          "expected": "Age-appropriate categories"
+        },
+        {
+          "content": "Exit kids mode",
+          "expected": "Returns to main experience"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Page Health",
+      "custom_id": "TC-007",
+      "priority_id": 3,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Check homepage health",
+          "expected": "No broken images or empty links"
+        },
+        {
+          "content": "Verify alt text",
+          "expected": "All images have alt text"
+        },
+        {
+          "content": "Check form labels",
+          "expected": "All inputs properly labeled"
+        },
+        {
+          "content": "Monitor console",
+          "expected": "No JavaScript errors"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Content Details",
+      "custom_id": "TC-008",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Click movie thumbnail",
+          "expected": "Detail page loads"
+        },
+        {
+          "content": "Verify metadata",
+          "expected": "Title, year, rating, duration visible"
+        },
+        {
+          "content": "Check description",
+          "expected": "Synopsis text present"
+        },
+        {
+          "content": "Verify related content",
+          "expected": "Similar titles suggested"
+        }
+      ],
+      "custom_automation_type": 0
+    }
+  ]
+}

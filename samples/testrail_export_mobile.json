@@ -1,0 +1,158 @@
+{
+  "format": "testrail",
+  "version": "1.0",
+  "platform": "android",
+  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511",
+  "test_cases": [
+    {
+      "title": "App Launch and Onboarding",
+      "custom_id": "TC-001",
+      "priority_id": 1,
+      "type_id": 2,
+      "custom_preconds": "App is installed, first launch",
+      "custom_steps_separated": [
+        {
+          "content": "Launch app",
+          "expected": "Splash screen appears with Sign In and Skip options",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_001_splash.png"
+        },
+        {
+          "content": "Observe splash screen",
+          "expected": "Should show app logo, Sign In button, Skip button, Privacy Policy and Terms links",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_001_splash.png"
+        },
+        {
+          "content": "Tap Skip",
+          "expected": "Should navigate to home screen with content",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_011_after_tap_element.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Sign In Flow",
+      "custom_id": "TC-002",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "App is installed, user has valid credentials",
+      "custom_steps_separated": [
+        {
+          "content": "Launch app and tap \"Sign In\"",
+          "expected": "Sign in screen appears with email/password fields",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_003_after_tap_Sign_In.png"
+        },
+        {
+          "content": "Observe sign in screen",
+          "expected": "Should show email field, password field, social sign-in options, and forgot password link",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_004_login.png"
+        },
+        {
+          "content": "Verify social sign-in options",
+          "expected": "Google sign-in button should be present and tappable",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_004_login.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Password Reset Flow",
+      "custom_id": "TC-003",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "App is installed, user is on sign in screen",
+      "custom_steps_separated": [
+        {
+          "content": "Tap \"Reset it here\"",
+          "expected": "Password reset screen appears",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_006_after_tap_Reset_it_here.png"
+        },
+        {
+          "content": "Observe reset screen",
+          "expected": "Should show email input field and reset instructions",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_007_password_reset.png"
+        },
+        {
+          "content": "Press back",
+          "expected": "Should return to sign in screen",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_008_after_back.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Content Browse and Navigation",
+      "custom_id": "TC-004",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "App is installed, user is on home screen",
+      "custom_steps_separated": [
+        {
+          "content": "Observe home screen",
+          "expected": "Should show featured content carousel and content rows",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_024_home.png"
+        },
+        {
+          "content": "Scroll down",
+          "expected": "More content rows should load",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_013_after_swipe_up.png"
+        },
+        {
+          "content": "Scroll further",
+          "expected": "Additional content should be revealed",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_014_after_swipe_up.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Content Detail View",
+      "custom_id": "TC-005",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "App is installed, user is on home screen",
+      "custom_steps_separated": [
+        {
+          "content": "Tap any content tile",
+          "expected": "Detail page should open",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_020_after_tap_element.png"
+        },
+        {
+          "content": "Observe detail screen",
+          "expected": "Should show title, description, cast, play button",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_021_detail.png"
+        },
+        {
+          "content": "Scroll down",
+          "expected": "Should reveal more content info and recommendations",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_022_after_swipe_up.png"
+        },
+        {
+          "content": "Press back",
+          "expected": "Should return to previous screen",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_023_after_back.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Search Function",
+      "custom_id": "TC-006",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "App is installed, user is on home screen",
+      "custom_steps_separated": [
+        {
+          "content": "Tap search icon",
+          "expected": "Search screen should appear",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_017_search.png"
+        },
+        {
+          "content": "Observe search screen",
+          "expected": "Should show search bar, trending searches, categories",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_017_search.png"
+        }
+      ],
+      "custom_automation_type": 0
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "nodes": [
+    {
+      "id": "63c60c646605",
+      "url": "com.tubitv.dev/com.tubitv.activities.MainActivity",
+      "title": "Find the",
+      "domain": "com.tubitv.dev",
+      "path": "com.tubitv.activities.MainActivity",
+      "page_type": "home",
+      "screenshot_path": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_024_home.png",
+      "element_count": 6,
+      "timestamp": 1771634140.050688,
+      "visited": true,
+      "depth": 0,
+      "observations": "Main screen layout appears to include:\n- Bottom navigation tabs\n- Featured content section\n- Content rows/categories\n- Looking for settings/profile access points",
+      "available_actions": "[0] TextView: \"Skip\"\n[1] View: \"view_sign_button\"\n[2] View: \"view_sign_button\"\n[3] TextView: \"Sign In\"\n[4] TextView: \"Privacy Policy\"\n[5] TextView: \"Terms of Use\""
+    },
+    {
+      "id": "e03da27e35cf",
+      "url": "com.tubitv.dev/com.tubitv.activities.MainActivity",
+      "title": "Continue with Google",
+      "domain": "com.tubitv.dev",
+      "path": "com.tubitv.activities.MainActivity",
+      "page_type": "login",
+      "screenshot_path": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_004_login.png",
+      "element_count": 6,
+      "timestamp": 1771634153.742066,
+      "visited": true,
+      "depth": 1,
+      "observations": "Sign In screen contains:\n- Email input field\n- Password input field\n- \"Forgot Password?\" link\n- Alternative sign-in options: appears to be Facebook and other social providers\n- Back button in top left\n- \"New to Tubi?\" text with Sign Up link\n\nScreen layout follows standard Material Design patterns for authentication forms. All text is legible and properly contrasted.",
+      "available_actions": "[0] View: \"sign_in_with_google\"\n[1] EditText: \"email\"\n[2] EditText: \"password\"\n[3] View: \"toggle_password_visibility_button\"\n[4] View: \"sign_in_button\"\n[5] TextView: \"Reset it here\""
+    },
+    {
+      "id": "07f600a74cd5",
+      "url": "com.tubitv.dev/com.tubitv.activities.MainActivity",
+      "title": "Email",
+      "domain": "com.tubitv.dev",
+      "path": "com.tubitv.activities.MainActivity",
+      "page_type": "password_reset",
+      "screenshot_path": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_007_password_reset.png",
+      "element_count": 1,
+      "timestamp": 1771634170.06357,
+      "visited": true,
+      "depth": 2,
+      "observations": "Password Reset screen contains:\n- Email input field\n- \"Reset Password\" button\n- Clear instructions about password reset process\n- Back button to return to sign in\n- Clean, focused layout with single purpose",
+      "available_actions": "[0] EditText: \"email_reset_input\""
+    },
+    {
+      "id": "e0c2bcf56527",
+      "url": "com.google.android.gms/.auth.api.signin.ui.SignInActivity",
+      "title": "Checking info\u2026",
+      "domain": "com.google.android.gms",
+      "path": ".auth.api.signin.ui.SignInActivity",
+      "page_type": "unknown",
+      "screenshot_path": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_016_after_tap_element.png",
+      "element_count": 0,
+      "timestamp": 1771634243.7082272,
+      "visited": false,
+      "depth": 1,
+      "observations": "",
+      "available_actions": ""
+    },
+    {
+      "id": "c987218b4dc8",
+      "url": "com.google.android.gms/.auth.uiflows.minutemaid.MinuteMaidActivity",
+      "title": "Sign in - Google Accounts",
+      "domain": "com.google.android.gms",
+      "path": ".auth.uiflows.minutemaid.MinuteMaidActivity",
+      "page_type": "search",
+      "screenshot_path": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_017_search.png",
+      "element_count": 5,
+      "timestamp": 1771634251.675905,
+      "visited": true,
+      "depth": 1,
+      "observations": "Search screen contains:\n- Prominent search bar at top\n- Mic icon for voice search\n- Trending searches section\n- Popular categories/genres\n- Recent searches (empty initially)\n- Clean layout with proper spacing and touch targets",
+      "available_actions": "[0] Button: \"Learn more about using your account\"\n[1] EditText: \"identifierId\"\n[2] Button: \"Forgot email?\"\n[3] Button: \"Next\"\n[4] Button: \"Create account\""
+    },
+    {
+      "id": "4fb44bb2e9cd",
+      "url": "com.tubitv.dev/com.tubitv.activities.MainActivity",
+      "title": "Unknown Screen",
+      "domain": "com.tubitv.dev",
+      "path": "com.tubitv.activities.MainActivity",
+      "page_type": "detail",
+      "screenshot_path": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_163511/step_021_detail.png",
+      "element_count": 0,
+      "timestamp": 1771634290.563945,
+      "visited": true,
+      "depth": 0,
+      "observations": "Content detail screen shows:\n- Large hero image/poster\n- Title and year\n- Genre tags\n- Rating and duration\n- Synopsis/description\n- Cast and crew information\n- Play button\n- Share button\n- Similar content suggestions\n- Material Design layout with proper typography and spacing",
+      "available_actions": ""
+    }
+  ],
+  "edges": [
+    {
+      "from_id": "63c60c646605",
+      "to_id": "e03da27e35cf",
+      "action_type": "tap",
+      "element_text": "Sign In",
+      "element_selector": "com.tubitv.dev:id/onboarding_sign_in",
+      "timestamp": 1771634153.742073,
+      "observation": "Expected: Should navigate to sign in screen with email/password fields and social auth options"
+    },
+    {
+      "from_id": "e03da27e35cf",
+      "to_id": "07f600a74cd5",
+      "action_type": "tap",
+      "element_text": "Reset it here",
+      "element_selector": "com.tubitv.dev:id/reset_password",
+      "timestamp": 1771634170.0635772,
+      "observation": "Expected: Should navigate to password reset screen with email input field"
+    },
+    {
+      "from_id": "07f600a74cd5",
+      "to_id": "e03da27e35cf",
+      "action_type": "back",
+      "element_text": "android_back",
+      "element_selector": "",
+      "timestamp": 1771634178.229287,
+      "observation": "Returning to sign in screen to continue authentication flow exploration"
+    },
+    {
+      "from_id": "e03da27e35cf",
+      "to_id": "2c435cf8ea52",
+      "action_type": "back",
+      "element_text": "android_back",
+      "element_selector": "",
+      "timestamp": 1771634183.479518,
+      "observation": "Returning to splash screen to explore registration flow"
+    },
+    {
+      "from_id": "63c60c646605",
+      "to_id": "e0c2bcf56527",
+      "action_type": "tap",
+      "element_text": "",
+      "element_selector": "com.tubitv.dev:id/view_sign_button",
+      "timestamp": 1771634243.708231,
+      "observation": "Expected: Should open search screen with search bar and trending/suggested content"
+    },
+    {
+      "from_id": "c987218b4dc8",
+      "to_id": "4fb44bb2e9cd",
+      "action_type": "back",
+      "element_text": "android_back",
+      "element_selector": "",
+      "timestamp": 1771634266.2247832,
+      "observation": "Returning to main app to continue exploration"
+    },
+    {
+      "from_id": "4fb44bb2e9cd",
+      "to_id": "63c60c646605",
+      "action_type": "back",
+      "element_text": "android_back",
+      "element_selector": "",
+      "timestamp": 1771634304.3125818,
+      "observation": "Returning to main screen to explore settings"
+    }
+  ]
+}
