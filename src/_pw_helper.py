@@ -154,7 +154,7 @@ def main():
     pw = sync_playwright().start()
     br = pw.chromium.launch(headless=headless)
     ctx = br.new_context(
-        viewport={"width": 1280, "height": 900},
+        viewport={"width": 1920, "height": 1080},
         user_agent=(
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "

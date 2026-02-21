@@ -448,7 +448,7 @@ def check_page_health(reason: str = "General page health audit") -> str:
 @tool
 def resize_viewport(width: int, height: int, reason: str) -> str:
     """Resize the browser viewport to test responsive design at different breakpoints.
-    Common sizes: mobile (375x812), tablet (768x1024), desktop (1280x900), wide (1920x1080).
+    Common sizes: mobile (375x812), tablet (768x1024), desktop (1920x1080).
 
     Args:
         width: Viewport width in pixels
@@ -996,24 +996,34 @@ Whatever you identified as the site's core purpose — test the full flow end-to
 - Follow the flow to its natural conclusion (detail page, player, cart, form completion)
 - Document every step: what appeared, what controls exist, what the expected behavior is
 
-### 4. TEST SEARCH (if search exists)
-- Find the search input (may be behind a search icon — click it first)
+### 4. TEST SEARCH — MANDATORY (if search exists)
+This is a P0 requirement. You MUST actually use search, not just note it exists.
+- Find the search input (may be behind a search icon — click the icon first)
 - get_form_fields to locate the input selector
-- type_text with a query relevant to the site's content
-- scan_page the results
-- type_text with gibberish to test the "no results" experience
+- type_text with a REAL query relevant to the site's content (based on what you've seen on the page)
+- scan_page the results — how many results? What do result cards show? Any filters?
+- Clear the search and type_text with gibberish like "xyzabc999" to test "no results" experience
+- scan_page again — is there a "no results" message? Suggestions? Empty state design?
+- press_key "Escape" or click X to exit search — does it return to previous view?
 
-### 5. DETECT AND TEST MODE/STATE CHANGES
+### 5. TEST SIGN IN / SIGN UP — MANDATORY (if login/register exists)
+This is a P1 requirement. You MUST click into sign-in and sign-up pages.
+- Click every "Sign In", "Log In", "Register", "Sign Up", "Create Account" link/button you see
+- scan_page the resulting page/modal
+- get_form_fields to inventory ALL inputs: email, password, confirm password, name, etc.
+- Document: field types (text, password, email), placeholders, required indicators, password rules
+- Note ALL sign-in methods: email/password, Google, Facebook, Apple, SSO, phone number, etc.
+- Check for "Forgot Password" link — click it and document that page too
+- Check for terms/privacy links on the auth pages
+- press_key "Tab" to test focus order through the form fields
+- Do NOT submit real credentials, but document the complete form structure and all options
+- go_back to return to main navigation
+
+### 6. DETECT AND TEST MODE/STATE CHANGES
 When clicking something causes `changes_from_previous` to show header items appearing/disappearing:
 - This is a mode or state change (kids mode, admin view, language switch, category filter, etc.)
 - Document exactly what changed: items removed, items added, content filtering
 - Find and test the way to EXIT the mode / return to default state
-
-### 6. TEST FORMS AND AUTH PAGES
-- Visit any login, register, signup, or contact pages
-- get_form_fields to inventory all inputs (types, labels, placeholders, required flags)
-- press_key "Tab" through fields to verify keyboard navigation and focus order
-- Do NOT submit real credentials, but document the complete form structure
 
 ### 7. SCROLL TO DISCOVER HIDDEN CONTENT
 - scroll_page down 2-3 times on every major page to see below-the-fold content
@@ -1027,10 +1037,23 @@ When clicking something causes `changes_from_previous` to show header items appe
 ### 9. TEST RESPONSIVE DESIGN
 - resize_viewport to mobile (375x812) on the homepage
 - scan_page and compare: does layout change? Nav collapse? Content reflow?
-- resize_viewport back to 1280x900 when done
+- resize_viewport back to 1920x1080 when done
 
 ## PHASE 3: TEST CASE GENERATION
-After thorough exploration (25+ tool calls minimum), call generate_test_cases then write_test_report.
+After thorough exploration (35+ tool calls minimum), call generate_test_cases then write_test_report.
+
+STOP — before generating, verify you completed this checklist:
+[ ] Clicked every nav item in the header/menu
+[ ] Explored hover dropdowns and clicked items inside them
+[ ] Tested the primary function end-to-end (e.g., played a video, opened a product)
+[ ] Used search with a real query AND a gibberish query
+[ ] Clicked into Sign In AND Sign Up (documented all fields and auth methods)
+[ ] Scrolled down on at least 3 pages
+[ ] Checked a "Forgot Password" or similar secondary auth flow
+[ ] Tested at least one mode/state change (if available)
+[ ] Checked page health on at least 2 pages
+[ ] Tested responsive design at mobile viewport
+If you skipped any of these, GO BACK AND DO THEM before generating test cases.
 
 Generate test cases covering EVERYTHING you discovered:
 1. **Primary function** (P0) — the site's core action, end-to-end

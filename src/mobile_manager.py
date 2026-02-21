@@ -130,6 +130,7 @@ class MobileManager:
     @staticmethod
     def _ios_options(app_path, bundle_id):
         from appium.options.ios import XCUITestOptions
+        import subprocess
 
         opts = XCUITestOptions()
         opts.platform_name = "iOS"
@@ -140,6 +141,40 @@ class MobileManager:
         opts.no_reset = True
         opts.new_command_timeout = 300
         opts.auto_accept_alerts = True
+
+        device_name = os.getenv("IOS_DEVICE_NAME", "")
+        platform_version = os.getenv("IOS_PLATFORM_VERSION", "")
+
+        if not device_name:
+            try:
+                result = subprocess.run(
+                    ["xcrun", "simctl", "list", "devices", "booted", "--json"],
+                    capture_output=True, text=True, timeout=5,
+                )
+                import json as _json
+                data = _json.loads(result.stdout)
+                for runtime, devices in data.get("devices", {}).items():
+                    for dev in devices:
+                        if dev.get("state") == "Booted":
+                            device_name = dev["name"]
+                            version_match = re.search(r"(\d+\.\d+)", runtime)
+                            if version_match:
+                                platform_version = version_match.group(1)
+                            break
+                    if device_name:
+                        break
+            except Exception:
+                pass
+
+        if not device_name:
+            device_name = "iPhone 16"
+        if not platform_version:
+            platform_version = "18.0"
+
+        opts.device_name = device_name
+        opts.platform_version = platform_version
+
+        logger.info("iOS options: device=%s, version=%s", device_name, platform_version)
         return opts
 
     # ------------------------------------------------------------------

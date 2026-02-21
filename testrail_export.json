@@ -1,56 +1,61 @@
 {
   "format": "testrail",
   "version": "1.0",
-  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_150439",
+  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253",
   "test_cases": [
     {
-      "title": "Video Content Playback",
+      "title": "Video Playback Flow",
       "custom_id": "TC-001",
       "priority_id": 1,
       "type_id": 2,
-      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_preconds": "User is on Tubi.tv homepage",
       "custom_steps_separated": [
         {
-          "content": "Navigate to homepage",
-          "expected": "Homepage loads with featured content and navigation"
+          "content": "Navigate to content detail page",
+          "expected": "Page loads with title, description, metadata",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_020"
         },
         {
-          "content": "Click on any movie/show thumbnail",
-          "expected": "Detail page opens showing title, synopsis, cast, and play button"
+          "content": "Click \"Watch Now\" button",
+          "expected": "Video player loads with pre-roll ad indicator",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_021"
         },
         {
-          "content": "Click \"Play FREE\" button",
-          "expected": "Video player launches"
+          "content": "Wait for ad to complete",
+          "expected": "Content begins playing"
         },
         {
           "content": "Verify player controls",
-          "expected": "Play/pause, volume, fullscreen, and subtitle controls present"
+          "expected": "Play/pause, timeline, volume, fullscreen buttons work"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "Main Navigation",
+      "title": "Search Functionality",
       "custom_id": "TC-002",
       "priority_id": 2,
-      "type_id": 4,
-      "custom_preconds": "User is on Tubi TV homepage",
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi.tv homepage",
       "custom_steps_separated": [
         {
-          "content": "Click \"Movies\" in header",
-          "expected": "Movies page loads with categories and featured films"
+          "content": "Click search icon",
+          "expected": "Search bar appears with placeholder text",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_006"
         },
         {
-          "content": "Click \"TV Shows\" in header",
-          "expected": "TV Shows page loads with series categories"
+          "content": "Enter valid query \"Jurassic World\"",
+          "expected": "Results appear with relevant content",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_007"
         },
         {
-          "content": "Click \"Live TV\" in header",
-          "expected": "Live TV page loads with streaming channels"
+          "content": "Enter invalid query \"xyzabc999\"",
+          "expected": "\"No results found\" message appears",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_008"
         },
         {
-          "content": "Click \"Browse\" dropdown",
-          "expected": "Genre categories appear in dropdown"
+          "content": "Clear search",
+          "expected": "Returns to previous view"
         }
       ],
       "custom_automation_type": 0
@@ -60,75 +65,132 @@
       "custom_id": "TC-003",
       "priority_id": 2,
       "type_id": 2,
-      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_preconds": "User is on Tubi.tv homepage",
       "custom_steps_separated": [
         {
-          "content": "Click \"Tubi Kids\" in header",
-          "expected": "Switches to kids mode"
+          "content": "Click \"Tubi Kids\" button",
+          "expected": "Switches to kids-safe content mode",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_014"
         },
         {
-          "content": "Verify header changes",
-          "expected": "Header simplifies to Browse, Exit Kids, Register, Sign In"
+          "content": "Verify navigation",
+          "expected": "Shows simplified kids-specific menu",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_015"
         },
         {
-          "content": "Verify content filtering",
-          "expected": "Only kid-friendly content shown"
+          "content": "Verify content",
+          "expected": "Only family-friendly content visible"
         },
         {
           "content": "Click \"Exit Kids\"",
-          "expected": "Returns to normal mode with full content"
+          "expected": "Returns to normal mode"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "Search Functionality",
+      "title": "Browse Navigation",
       "custom_id": "TC-004",
       "priority_id": 2,
-      "type_id": 2,
-      "custom_preconds": "User is on Tubi TV homepage",
+      "type_id": 4,
+      "custom_preconds": "User is on Tubi.tv homepage",
       "custom_steps_separated": [
         {
-          "content": "Type valid query in search bar",
-          "expected": "Results appear with relevant titles"
+          "content": "Hover over Browse menu",
+          "expected": "Dropdown appears with categories",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_002"
         },
         {
-          "content": "Search for \"scooby doo\"",
-          "expected": "Shows Scooby-Doo related content"
+          "content": "Click category item",
+          "expected": "Shows filtered content grid",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_003"
         },
         {
-          "content": "Submit empty search",
-          "expected": "Shows error message or placeholder"
-        },
-        {
-          "content": "Search with special characters",
-          "expected": "Handles special characters appropriately"
+          "content": "Verify content cards",
+          "expected": "Shows thumbnails, titles, metadata",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_004"
         }
       ],
       "custom_automation_type": 0
     },
     {
-      "title": "Responsive Design",
+      "title": "Authentication Flow",
       "custom_id": "TC-005",
-      "priority_id": 3,
+      "priority_id": 2,
       "type_id": 2,
-      "custom_preconds": "User is on Tubi TV homepage",
+      "custom_preconds": "User is on Tubi.tv homepage",
       "custom_steps_separated": [
         {
-          "content": "View on mobile (375x812)",
-          "expected": "Layout adapts with hamburger menu"
+          "content": "Click \"Sign In\"",
+          "expected": "Login form appears",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_011"
         },
         {
-          "content": "Check content grid",
-          "expected": "Switches to 2-column layout"
+          "content": "Verify form fields",
+          "expected": "Email, password fields present",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_012"
         },
         {
-          "content": "Verify touch targets",
-          "expected": "Buttons and links appropriately sized"
+          "content": "Verify social options",
+          "expected": "Google, Facebook buttons visible"
         },
         {
-          "content": "Test menu navigation",
-          "expected": "Mobile menu functions correctly"
+          "content": "Click \"Forgot Password\"",
+          "expected": "Reset password flow available"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Mobile Responsive Design",
+      "custom_id": "TC-006",
+      "priority_id": 3,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi.tv homepage",
+      "custom_steps_separated": [
+        {
+          "content": "View at 375x812",
+          "expected": "Layout adapts to mobile",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_016"
+        },
+        {
+          "content": "Verify navigation",
+          "expected": "Menu collapses to hamburger",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/run_20260220_160253/step_017"
+        },
+        {
+          "content": "Verify content",
+          "expected": "Cards stack vertically"
+        },
+        {
+          "content": "Test interactions",
+          "expected": "Touch targets adequate size"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Page Health",
+      "custom_id": "TC-007",
+      "priority_id": 3,
+      "type_id": 2,
+      "custom_preconds": "User is on Tubi.tv homepage",
+      "custom_steps_separated": [
+        {
+          "content": "Run health check",
+          "expected": "Minimal accessibility issues"
+        },
+        {
+          "content": "Verify images",
+          "expected": "Alt text present (1 missing)"
+        },
+        {
+          "content": "Verify links",
+          "expected": "No empty links"
+        },
+        {
+          "content": "Check inputs",
+          "expected": "All inputs properly labeled"
         }
       ],
       "custom_automation_type": 0

@@ -1,0 +1,148 @@
+{
+  "format": "testrail",
+  "version": "1.0",
+  "platform": "android",
+  "screenshot_directory": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422",
+  "test_cases": [
+    {
+      "title": "App Launch and Permissions",
+      "custom_id": "TC-001",
+      "priority_id": 1,
+      "type_id": 2,
+      "custom_preconds": "App is installed\nApp has not been launched before\nNotifications permissions not granted",
+      "custom_steps_separated": [
+        {
+          "content": "Launch the app",
+          "expected": "Splash screen appears with Sign In and Skip options",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_001_splash.png"
+        },
+        {
+          "content": "Wait for permissions dialog",
+          "expected": "Notification permissions dialog appears",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_021_splash.png"
+        },
+        {
+          "content": "Tap \"Allow\"",
+          "expected": "Permissions granted, app continues to main flow",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_023_after_tap_Allow.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Sign In Flow",
+      "custom_id": "TC-002",
+      "priority_id": 1,
+      "type_id": 2,
+      "custom_preconds": "App is installed\nUser has valid credentials\nAt splash screen",
+      "custom_steps_separated": [
+        {
+          "content": "Tap \"Sign In\" on splash screen",
+          "expected": "Sign in screen appears with all auth options",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_002_before_tap_Sign_In.png"
+        },
+        {
+          "content": "Verify sign in screen elements",
+          "expected": "Screen contains:\n- Email input field\n- Password input field with visibility toggle\n- Sign In button\n- Google sign in option\n- Facebook sign in option\n- \"Forgot Password?\" link\n- \"Register\" link",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_004_login.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Password Reset Flow",
+      "custom_id": "TC-003",
+      "priority_id": 1,
+      "type_id": 2,
+      "custom_preconds": "App is installed\nOn sign in screen",
+      "custom_steps_separated": [
+        {
+          "content": "Tap \"Reset it here\" link",
+          "expected": "Password reset screen appears",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_006_after_tap_Reset_it_here.png"
+        },
+        {
+          "content": "Verify password reset screen elements",
+          "expected": "Screen contains:\n- Email input field\n- Reset password button\n- Back button\n- Clear instructions",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_007_password_reset.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Back Navigation",
+      "custom_id": "TC-004",
+      "priority_id": 2,
+      "type_id": 4,
+      "custom_preconds": "App is installed\nOn password reset screen",
+      "custom_steps_separated": [
+        {
+          "content": "Press back button",
+          "expected": "Returns to sign in screen",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_008_after_back.png"
+        },
+        {
+          "content": "Press back button again",
+          "expected": "Returns to splash screen",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_009_after_back.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Skip Onboarding",
+      "custom_id": "TC-005",
+      "priority_id": 1,
+      "type_id": 4,
+      "custom_preconds": "App is installed\nOn splash screen",
+      "custom_steps_separated": [
+        {
+          "content": "Tap \"Skip\" button",
+          "expected": "Bypasses sign in, enters main app interface",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_011_after_tap_element.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Notification Permission Handling",
+      "custom_id": "TC-006",
+      "priority_id": 1,
+      "type_id": 2,
+      "custom_preconds": "App is installed\nNotifications not yet permitted",
+      "custom_steps_separated": [
+        {
+          "content": "Launch app and wait for permission dialog",
+          "expected": "Notification permission dialog appears",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_021_splash.png"
+        },
+        {
+          "content": "Tap \"Allow\"",
+          "expected": "Permission granted, app continues",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_023_after_tap_Allow.png"
+        }
+      ],
+      "custom_automation_type": 0
+    },
+    {
+      "title": "Error State Handling",
+      "custom_id": "TC-007",
+      "priority_id": 2,
+      "type_id": 2,
+      "custom_preconds": "App is installed\nNetwork connection available",
+      "custom_steps_separated": [
+        {
+          "content": "Monitor app transitions and error states",
+          "expected": "App handles state changes gracefully",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_025_after_tap_element.png"
+        },
+        {
+          "content": "Verify error recovery",
+          "expected": "App returns to stable state after errors",
+          "attachment": "/Users/dgapuz/DataDog Hackathon/screenshots/mobile_android_run_20260220_161422/step_026_home.png"
+        }
+      ],
+      "custom_automation_type": 0
+    }
+  ]
+}
